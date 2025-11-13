@@ -60,7 +60,9 @@ Click the "Bot" tab on the left sidebar, then click "Add Bot". Discord will ask 
 
 Now here's the important part: Under the Token section, click "Reset Token". Discord will show you a long string of random characters - click Copy immediately. This is your `DISCORD_TOKEN`.
 
-**Important**: This token is like a password to your bot. Never share it with anyone, never post it online, and never commit it to GitHub. If someone gets your token, they can control your bot.
+> [!IMPORTANT]
+> This token is like a password to your bot. Never share it with anyone, never post it online, and never commit it to GitHub.
+> If someone gets your token, they can control your bot.
 
 ### Step 4: Turn On the Right Permissions
 
