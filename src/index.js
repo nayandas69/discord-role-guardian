@@ -1,6 +1,6 @@
 /**
  * Discord Role Guardian Bot - Main Entry Point
- * Professional Discord bot with reaction roles, welcome/leave messages
+ * Discord bot with reaction roles, welcome/leave messages
  * Author: nayandas69
  * Repository: https://github.com/nayandas69/discord-role-guardian
  */
@@ -74,6 +74,10 @@ const server = http.createServer((req, res) => {
         uptime: process.uptime(),
         servers: client.guilds.cache.size,
         timestamp: new Date().toISOString(),
+        storage: {
+          configured: client.guilds.cache.size > 0,
+          dataPath: process.env.DATA_PATH || "local",
+        },
       }),
     )
   } else {
@@ -85,7 +89,8 @@ const server = http.createServer((req, res) => {
 // Start HTTP server for health checks
 server.listen(PORT, () => {
   log.system(`Health check server listening on port ${PORT}`)
-  log.info(`UptimeRobot URL: http://your-app-url.railway.app/health`)
+  log.info(`UptimeRobot URL: https://discord-role-guardian-production.up.railway.app/health`)
+  // (Replace with your actual Railway app URL if different)
 })
 
 /**
@@ -96,6 +101,7 @@ client.once("clientReady", async () => {
   log.info(`Serving ${client.guilds.cache.size} server(s)`)
   log.info(`Monitoring ${client.users.cache.size} user(s)`)
 
+  log.system("Loading persistent configurations from Railway Volume...")
   loadAllConfigs()
 
   // Register slash commands with Discord API

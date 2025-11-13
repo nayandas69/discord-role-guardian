@@ -8,19 +8,39 @@ import { log } from "../utils/colors.js"
 import fs from "fs"
 import path from "path"
 
-// Storage file path
-const STORAGE_FILE = path.join(process.cwd(), "data", "config.json")
-
-// Ensure data directory exists
-if (!fs.existsSync(path.join(process.cwd(), "data"))) {
-  fs.mkdirSync(path.join(process.cwd(), "data"), { recursive: true })
-  log.system("Created data directory for persistent storage")
-}
+// Railway Volumes mount at /app/data, fallback to local ./data for development
+const DATA_DIR = process.env.DATA_PATH || path.join(process.cwd(), "data")
+const STORAGE_FILE = path.join(DATA_DIR, "config.json")
 
 // Storage objects for bot configuration
 let reactionRoles = new Map() // messageId -> roleConfig[]
 let welcomeConfigs = new Map() // guildId -> welcomeConfig
 let leaveConfigs = new Map() // guildId -> leaveConfig
+
+/**
+ * Ensure data directory exists with proper error handling
+ * This is critical for Railway Volumes to work correctly
+ */
+function ensureDataDirectory() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true })
+      log.system(`Created data directory at: ${DATA_DIR}`)
+    }
+
+    const testFile = path.join(DATA_DIR, ".write-test")
+    fs.writeFileSync(testFile, "test")
+    fs.unlinkSync(testFile)
+    log.success("Data directory is writable and ready for persistent storage")
+  } catch (error) {
+    log.error("Failed to create or access data directory", error)
+    log.failed("CRITICAL: Bot cannot save configurations. Check Railway Volume setup!")
+    throw error
+  }
+}
+
+// Ensure directory exists on module load
+ensureDataDirectory()
 
 /**
  * Load all configurations from file on startup
@@ -40,20 +60,23 @@ export function loadAllConfigs() {
         leaveConfigs = new Map(data.leaveConfigs)
       }
 
-      log.success("Loaded configurations from persistent storage")
+      log.success(`Loaded configurations from: ${STORAGE_FILE}`)
       log.info(
         `Loaded: ${reactionRoles.size} reaction roles, ${welcomeConfigs.size} welcome configs, ${leaveConfigs.size} leave configs`,
       )
+      log.success("Persistent storage verified - configurations survived restart!")
     } else {
       log.info("No existing configuration file found, starting fresh")
+      log.warn("Remember to configure bot using slash commands!")
     }
   } catch (error) {
     log.error("Failed to load configurations from file", error)
+    log.warn("Starting with empty configuration - please reconfigure the bot")
   }
 }
 
 /**
- * Save all configurations to file
+ * Save all configurations to file with enhanced error handling
  */
 function saveToFile() {
   try {
@@ -61,12 +84,20 @@ function saveToFile() {
       reactionRoles: Array.from(reactionRoles.entries()),
       welcomeConfigs: Array.from(welcomeConfigs.entries()),
       leaveConfigs: Array.from(leaveConfigs.entries()),
+      lastSaved: new Date().toISOString(),
+      version: "1.0.0",
     }
 
-    fs.writeFileSync(STORAGE_FILE, JSON.stringify(data, null, 2), "utf8")
-    log.system("Saved configurations to persistent storage")
+    const tempFile = `${STORAGE_FILE}.tmp`
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), "utf8")
+    fs.renameSync(tempFile, STORAGE_FILE)
+
+    log.system(`Saved configurations to: ${STORAGE_FILE}`)
+    log.success("All configurations persisted to Railway Volume!")
   } catch (error) {
     log.error("Failed to save configurations to file", error)
+    log.failed("CRITICAL: Changes may be lost on restart!")
+    log.warn("Check Railway Volume configuration in dashboard")
   }
 }
 
@@ -263,4 +294,29 @@ export function importConfigs(data) {
   log.info(
     `Imported: ${data.reactionRoles?.length || 0} reaction roles, ${data.welcomeConfigs?.length || 0} welcome configs, ${data.leaveConfigs?.length || 0} leave configs`,
   )
+}
+
+/**
+ * Get storage statistics for monitoring
+ * Useful for web dashboard and debugging
+ */
+export function getStorageStats() {
+  try {
+    const stats = fs.statSync(STORAGE_FILE)
+    return {
+      exists: true,
+      path: STORAGE_FILE,
+      size: stats.size,
+      modified: stats.mtime,
+      reactionRoleCount: reactionRoles.size,
+      welcomeConfigCount: welcomeConfigs.size,
+      leaveConfigCount: leaveConfigs.size,
+    }
+  } catch (error) {
+    return {
+      exists: false,
+      path: STORAGE_FILE,
+      error: error.message,
+    }
+  }
 }

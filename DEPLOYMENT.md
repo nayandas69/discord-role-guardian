@@ -47,9 +47,36 @@ Railway.app provides free hosting with automatic deployments from GitHub.
 3. Add these environment variables:
    - `DISCORD_TOKEN`: Your Discord bot token
    - `CLIENT_ID`: Your Discord bot client ID
+   - `DATA_PATH`: `/app/data` (for Railway Volume)
    - `PORT`: Leave empty (Railway auto-assigns)
 
 4. Click "Deploy" to restart with new variables
+
+### **IMPORTANT: Setup Railway Volume for Persistent Storage**
+
+This is the most critical step to ensure your bot configurations survive restarts!
+
+1. **In Railway dashboard**, click on your bot service
+2. **Go to "Volumes" section** (in the left sidebar)
+3. **Click "New Volume"**
+4. **Configure the volume:**
+   - **Mount Path**: `/app/data`
+   - **Name**: `bot-persistent-storage` (or any name you prefer)
+5. **Click "Add"**
+6. **Redeploy your service** (Railway will do this automatically)
+
+**What this does:**
+- Creates permanent storage that survives container restarts
+- Your `data/config.json` file persists forever
+- No need to reconfigure bot after Railway updates
+- Configurations survive deployments, crashes, and restarts
+
+**Verify it's working:**
+1. Configure your bot using slash commands in Discord
+2. Check Railway logs - you should see "Saved configurations to Railway Volume!"
+3. Restart your Railway service manually
+4. Check logs again - you should see "Loaded configurations from: /app/data/config.json"
+5. Your bot should still have all configurations without reconfiguring
 
 ### Get Your Railway URL:
 
@@ -98,7 +125,11 @@ You should see:
   "bot": "YourBotName#1234",
   "uptime": 12345,
   "servers": 1,
-  "timestamp": "2025-01-01T00:00:00.000Z"
+  "timestamp": "2025-01-01T00:00:00.000Z",
+  "storage": {
+    "configured": true,
+    "dataPath": "/app/data"
+  }
 }
 ```
 
@@ -143,6 +174,37 @@ npm start
 # In another terminal:
 curl http://localhost:3000/health
 ```
+
+### Bot Loses Configuration After Restart
+
+**This means Railway Volume is NOT configured!**
+
+Fix:
+1. Go to Railway dashboard
+2. Add Volume with mount path `/app/data`
+3. Redeploy the service
+4. Reconfigure bot with slash commands
+5. Test by restarting - configurations should persist
+
+### Check Storage Status
+
+You can verify storage is working by checking the health endpoint:
+
+```bash
+curl https://your-railway-url.railway.app/health
+```
+
+Look for the `storage` field in the response:
+```json
+{
+  "storage": {
+    "configured": true,
+    "dataPath": "/app/data"
+  }
+}
+```
+
+If `dataPath` shows "local" instead of "/app/data", the volume is not mounted correctly.
 
 ## Cost
 
