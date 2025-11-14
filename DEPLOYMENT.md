@@ -83,7 +83,7 @@ This is the most critical step to ensure your bot configurations survive restart
 1. Go to "Settings" tab in Railway
 2. Scroll to "Domains"
 3. Click "Generate Domain"
-4. Copy the URL (example: `discord-role-guardian-production.up.railway.app`)
+4. Copy the URL (example: `https://your-railway-url.railway.app`)
 
 Your bot is now live 24/7 on Railway!
 
@@ -132,6 +132,66 @@ You should see:
   }
 }
 ```
+
+## Step 5: Configure Bot Features
+
+After deployment, configure your bot using Discord slash commands:
+
+### Setup Reaction Roles
+```
+/setup-reaction-roles
+message-id: [message ID]
+emoji: 👍
+role: @Member
+```
+
+### Setup Welcome Messages
+```
+/setup-welcome
+channel: #welcome
+message: Welcome {user} to the server!
+color: #00ff00
+```
+
+### Setup Leave Messages
+```
+/setup-leave
+channel: #goodbye
+message: {user} has left the server
+color: #ff0000
+```
+
+### Setup Leveling System
+```
+/setup-leveling
+announcement-channel: #level-ups
+xp-per-message: 15
+xp-cooldown: 60
+```
+
+### Add Level Roles
+```
+/add-level-role
+level: 10
+role: @Active Member
+```
+
+### Schedule Messages
+```
+/schedule-message
+name: daily-announcement
+channel: #announcements
+schedule-type: daily
+time: 09:00
+message: Good morning everyone!
+```
+
+**Important Notes:**
+- All setup commands require Administrator permissions
+- Public commands like `/rank` and `/leaderboard` work for all members
+- XP is tracked per-server (multi-server support built-in)
+- Scheduled messages use UTC timezone
+- Dynamic status shows what the bot is doing in real-time
 
 ## Automatic Deployments
 
@@ -234,3 +294,4 @@ Just make sure to:
 3. Configure the health check endpoint
 
 Your Discord bot is now running 24/7!
+Enjoy your Discord Role Guardian Bot! If you have any questions, feel free to open an issue on GitHub.

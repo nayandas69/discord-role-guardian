@@ -4,7 +4,7 @@
  * This is ready for future web dashboard integration
  */
 
-import { log } from "../utils/colors.js"
+import log from "../utils/colors.js"
 import fs from "fs"
 import path from "path"
 
@@ -16,6 +16,9 @@ const STORAGE_FILE = path.join(DATA_DIR, "config.json")
 let reactionRoles = new Map() // messageId -> roleConfig[]
 let welcomeConfigs = new Map() // guildId -> welcomeConfig
 let leaveConfigs = new Map() // guildId -> leaveConfig
+let levelingConfigs = new Map() // guildId -> levelingConfig
+let userLevels = new Map() // guildId-userId -> { xp, level }
+let scheduledMessages = new Map() // guildId -> scheduledMessage[]
 
 /**
  * Ensure data directory exists with proper error handling
@@ -59,10 +62,22 @@ export function loadAllConfigs() {
       if (data.leaveConfigs) {
         leaveConfigs = new Map(data.leaveConfigs)
       }
+      if (data.levelingConfigs) {
+        levelingConfigs = new Map(data.levelingConfigs)
+      }
+      if (data.userLevels) {
+        userLevels = new Map(data.userLevels)
+      }
+      if (data.scheduledMessages) {
+        scheduledMessages = new Map(data.scheduledMessages)
+      }
 
       log.success(`Loaded configurations from: ${STORAGE_FILE}`)
       log.info(
         `Loaded: ${reactionRoles.size} reaction roles, ${welcomeConfigs.size} welcome configs, ${leaveConfigs.size} leave configs`,
+      )
+      log.info(
+        `Loaded: ${levelingConfigs.size} leveling configs, ${userLevels.size} user levels, ${scheduledMessages.size} scheduled messages`,
       )
       log.success("Persistent storage verified - configurations survived restart!")
     } else {
@@ -84,6 +99,9 @@ function saveToFile() {
       reactionRoles: Array.from(reactionRoles.entries()),
       welcomeConfigs: Array.from(welcomeConfigs.entries()),
       leaveConfigs: Array.from(leaveConfigs.entries()),
+      levelingConfigs: Array.from(levelingConfigs.entries()),
+      userLevels: Array.from(userLevels.entries()),
+      scheduledMessages: Array.from(scheduledMessages.entries()),
       lastSaved: new Date().toISOString(),
       version: "1.0.0",
     }
@@ -227,6 +245,141 @@ export function removeLeaveConfig(guildId) {
 }
 
 /**
+ * LEVELING SYSTEM STORAGE
+ */
+
+/**
+ * Save leveling configuration for a guild
+ * @param {string} guildId - Discord guild ID
+ * @param {Object} config - Leveling configuration
+ */
+export function saveLevelingConfig(guildId, config) {
+  levelingConfigs.set(guildId, config)
+  saveToFile()
+  log.system(`Saved leveling config for guild: ${guildId}`)
+  log.info(`Enabled: ${config.enabled}, XP range: ${config.xpMin}-${config.xpMax}`)
+}
+
+/**
+ * Get leveling configuration for a guild
+ * @param {string} guildId - Discord guild ID
+ * @returns {Object|null} Leveling config or null
+ */
+export function getLevelingConfig(guildId) {
+  return levelingConfigs.get(guildId) || null
+}
+
+/**
+ * Get user level data
+ * @param {string} guildId - Discord guild ID
+ * @param {string} userId - Discord user ID
+ * @returns {Object} User level data { xp, level }
+ */
+export function getUserLevel(guildId, userId) {
+  const key = `${guildId}-${userId}`
+  return userLevels.get(key) || { xp: 0, level: 0 }
+}
+
+/**
+ * Add XP to user and return new total
+ * @param {string} guildId - Discord guild ID
+ * @param {string} userId - Discord user ID
+ * @param {number} xpAmount - Amount of XP to add
+ * @returns {number} New total XP
+ */
+export function addUserXP(guildId, userId, xpAmount) {
+  const key = `${guildId}-${userId}`
+  const current = userLevels.get(key) || { xp: 0, level: 0 }
+  current.xp += xpAmount
+
+  userLevels.set(key, current)
+  saveToFile()
+
+  return current.xp
+}
+
+/**
+ * Get leaderboard for a guild
+ * @param {string} guildId - Discord guild ID
+ * @param {number} limit - Number of top users to return
+ * @returns {Array} Sorted array of user level data
+ */
+export function getGuildLeaderboard(guildId, limit = 10) {
+  const guildUsers = []
+
+  for (const [key, data] of userLevels) {
+    if (key.startsWith(`${guildId}-`)) {
+      const userId = key.split("-")[1]
+      guildUsers.push({ userId, ...data })
+    }
+  }
+
+  return guildUsers.sort((a, b) => b.xp - a.xp).slice(0, limit)
+}
+
+/**
+ * SCHEDULED MESSAGES STORAGE
+ */
+
+/**
+ * Save scheduled message configuration
+ * @param {string} guildId - Discord guild ID
+ * @param {Object} message - Scheduled message configuration
+ */
+export function saveScheduledMessage(guildId, message) {
+  const current = scheduledMessages.get(guildId) || []
+  const index = current.findIndex((m) => m.id === message.id)
+
+  if (index >= 0) {
+    current[index] = message
+  } else {
+    current.push(message)
+  }
+
+  scheduledMessages.set(guildId, current)
+  saveToFile()
+  log.system(`Saved scheduled message for guild: ${guildId}`)
+  log.info(`Message: ${message.name}, Type: ${message.schedule.type}`)
+}
+
+/**
+ * Get all scheduled messages
+ * @returns {Map} All scheduled messages
+ */
+export function getScheduledMessages() {
+  return scheduledMessages
+}
+
+/**
+ * Get scheduled messages for a specific guild
+ * @param {string} guildId - Discord guild ID
+ * @returns {Array} Scheduled messages for guild
+ */
+export function getGuildScheduledMessages(guildId) {
+  return scheduledMessages.get(guildId) || []
+}
+
+/**
+ * Remove scheduled message
+ * @param {string} guildId - Discord guild ID
+ * @param {string} messageId - Message ID
+ * @returns {boolean} True if removed
+ */
+export function removeScheduledMessage(guildId, messageId) {
+  const current = scheduledMessages.get(guildId) || []
+  const filtered = current.filter((m) => m.id !== messageId)
+
+  if (filtered.length < current.length) {
+    scheduledMessages.set(guildId, filtered)
+    saveToFile()
+    log.system(`Removed scheduled message: ${messageId}`)
+    return true
+  }
+
+  return false
+}
+
+/**
  * RESET ALL CONFIGURATIONS
  */
 
@@ -237,8 +390,9 @@ export function removeLeaveConfig(guildId) {
 export function resetGuildConfig(guildId) {
   welcomeConfigs.delete(guildId)
   leaveConfigs.delete(guildId)
+  levelingConfigs.delete(guildId)
+  scheduledMessages.delete(guildId)
 
-  // Remove all reaction roles for this guild
   let removedCount = 0
   for (const [messageId, config] of reactionRoles.entries()) {
     if (config[0]?.guildId === guildId) {
@@ -247,14 +401,27 @@ export function resetGuildConfig(guildId) {
     }
   }
 
+  let removedLevels = 0
+  for (const [key] of userLevels) {
+    if (key.startsWith(`${guildId}-`)) {
+      userLevels.delete(key)
+      removedLevels++
+    }
+  }
+
   saveToFile()
   log.success(`Reset all configurations for guild: ${guildId}`)
-  log.info(`Removed: welcome config, leave config, ${removedCount} reaction role configs`)
+  log.info(
+    `Removed: welcome config, leave config, ${removedCount} reaction role configs, leveling config, ${removedLevels} user levels, scheduled messages`,
+  )
 
   return {
     welcomeRemoved: true,
     leaveRemoved: true,
     reactionRolesRemoved: removedCount,
+    levelingRemoved: true,
+    userLevelsRemoved: removedLevels,
+    scheduledMessagesRemoved: true,
   }
 }
 
@@ -272,6 +439,9 @@ export function exportAllConfigs() {
     reactionRoles: Array.from(reactionRoles.entries()),
     welcomeConfigs: Array.from(welcomeConfigs.entries()),
     leaveConfigs: Array.from(leaveConfigs.entries()),
+    levelingConfigs: Array.from(levelingConfigs.entries()),
+    userLevels: Array.from(userLevels.entries()),
+    scheduledMessages: Array.from(scheduledMessages.entries()),
   }
 }
 
@@ -288,6 +458,15 @@ export function importConfigs(data) {
   }
   if (data.leaveConfigs) {
     data.leaveConfigs.forEach(([key, value]) => leaveConfigs.set(key, value))
+  }
+  if (data.levelingConfigs) {
+    data.levelingConfigs.forEach(([key, value]) => levelingConfigs.set(key, value))
+  }
+  if (data.userLevels) {
+    data.userLevels.forEach(([key, value]) => userLevels.set(key, value))
+  }
+  if (data.scheduledMessages) {
+    data.scheduledMessages.forEach(([key, value]) => scheduledMessages.set(key, value))
   }
   saveToFile()
   log.success("Configurations imported successfully")
@@ -311,6 +490,9 @@ export function getStorageStats() {
       reactionRoleCount: reactionRoles.size,
       welcomeConfigCount: welcomeConfigs.size,
       leaveConfigCount: leaveConfigs.size,
+      levelingConfigCount: levelingConfigs.size,
+      userLevelCount: userLevels.size,
+      scheduledMessageCount: scheduledMessages.size,
     }
   } catch (error) {
     return {

@@ -15,6 +15,8 @@ import { startActivityRotation } from "./utils/activityManager.js"
 import { handleInteractionCreate } from "./handlers/interactionHandler.js"
 import log from "./utils/colors.js"
 import { loadAllConfigs } from "./data/storage.js"
+import { setupLevelingSystem } from "./handlers/levelingSystem.js"
+import { setupScheduledMessages, cancelAllScheduledMessages } from "./handlers/scheduledMessages.js"
 
 // Load environment variables
 dotenv.config()
@@ -89,8 +91,8 @@ const server = http.createServer((req, res) => {
 // Start HTTP server for health checks
 server.listen(PORT, () => {
   log.system(`Health check server listening on port ${PORT}`)
-  log.info(`UptimeRobot URL: https://discord-role-guardian-production.up.railway.app/health`)
-  // (Replace with your actual Railway app URL if different)
+  log.info(`UptimeRobot URL: http://your-app-url.railway.app/health`)
+  // Replace 'your-app-url' with your actual Railway app URL
 })
 
 /**
@@ -118,6 +120,9 @@ client.once("clientReady", async () => {
   // Initialize event handlers
   setupReactionRoleHandler(client)
   setupMemberEvents(client)
+
+  setupLevelingSystem(client)
+  setupScheduledMessages(client)
 
   log.system("All systems operational!")
 })
@@ -149,6 +154,8 @@ async function gracefulShutdown(signal) {
   log.warn(`Received ${signal} signal, shutting down gracefully...`)
 
   try {
+    cancelAllScheduledMessages()
+
     // Close HTTP health check server
     server.close(() => {
       log.system("Health check server closed")

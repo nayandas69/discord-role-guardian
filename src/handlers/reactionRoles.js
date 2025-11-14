@@ -10,7 +10,8 @@
  * - Handles both cached and uncached reactions
  */
 
-import { EmbedBuilder } from "discord.js"
+import { EmbedBuilder, ActivityType } from "discord.js"
+import { setTemporaryStatus } from "../utils/activityManager.js"
 import log from "../utils/colors.js"
 import { getReactionRoleConfig } from "../data/storage.js"
 
@@ -139,6 +140,8 @@ export async function handleReactionAdd(reaction, user) {
       return
     }
 
+    setTemporaryStatus(`Assigning Role: ${user.username}`, ActivityType.Playing, 4000)
+
     // Assign the role
     await member.roles.add(roleId)
     log.success(`Assigned role to ${user.tag} (${emoji})`)
@@ -205,6 +208,8 @@ export async function handleReactionRemove(reaction, user) {
       log.info(`${user.tag} doesn't have the role to remove`)
       return
     }
+
+    setTemporaryStatus(`Removing Role: ${user.username}`, ActivityType.Playing, 4000)
 
     // Remove the role
     await member.roles.remove(roleId)

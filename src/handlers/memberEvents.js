@@ -10,7 +10,8 @@
  * - Beautiful embeds
  */
 
-import { EmbedBuilder } from "discord.js"
+import { EmbedBuilder, ActivityType } from "discord.js"
+import { setTemporaryStatus } from "../utils/activityManager.js"
 import log from "../utils/colors.js"
 import { getWelcomeConfig, getLeaveConfig } from "../data/storage.js"
 
@@ -28,6 +29,8 @@ export async function handleMemberJoin(member) {
       log.info(`No welcome channel configured for guild: ${member.guild.name}`)
       return
     }
+
+    setTemporaryStatus(`Welcoming ${member.user.username}`, ActivityType.Watching, 5000)
 
     // Fetch the welcome channel
     const channel = await member.guild.channels.fetch(welcomeConfig.channelId).catch(() => null)
@@ -103,6 +106,8 @@ export async function handleMemberLeave(member) {
       log.info(`No leave channel configured for guild: ${member.guild.name}`)
       return
     }
+
+    setTemporaryStatus(`Goodbye ${member.user.username}`, ActivityType.Watching, 5000)
 
     // Fetch the leave channel
     const channel = await member.guild.channels.fetch(leaveConfig.channelId).catch(() => null)

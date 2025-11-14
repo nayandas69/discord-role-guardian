@@ -1,6 +1,6 @@
 /**
  * Interaction Handler - Process all Discord interactions
- * Handles slash commands, buttons, and shows typing indicator
+ * Handles slash commands, buttons, autocomplete, and shows typing indicator
  */
 
 import { setupReactionRolesCommand } from "../commands/setupReactionRoles.js"
@@ -8,6 +8,15 @@ import { setupWelcomeCommand } from "../commands/setupWelcome.js"
 import { setupLeaveCommand } from "../commands/setupLeave.js"
 import { removeReactionRolesCommand } from "../commands/removeReactionRoles.js"
 import { resetCommand } from "../commands/reset.js"
+import { setupLevelingCommand } from "../commands/setupLeveling.js"
+import { addLevelRoleCommand } from "../commands/addLevelRole.js"
+import { rankCommand } from "../commands/rank.js"
+import { leaderboardCommand } from "../commands/leaderboard.js"
+import { scheduleMessageCommand } from "../commands/scheduleMessage.js"
+import { listScheduledCommand } from "../commands/listScheduled.js"
+import { removeScheduledCommand } from "../commands/removeScheduled.js"
+import { setTemporaryStatus } from "../utils/activityManager.js"
+import { ActivityType } from "discord.js"
 import log from "../utils/colors.js"
 
 /**
@@ -19,19 +28,48 @@ const commands = {
   "setup-leave": setupLeaveCommand,
   "remove-reaction-roles": removeReactionRolesCommand,
   reset: resetCommand,
+  "setup-leveling": setupLevelingCommand,
+  "add-level-role": addLevelRoleCommand,
+  rank: rankCommand,
+  leaderboard: leaderboardCommand,
+  "schedule-message": scheduleMessageCommand,
+  "list-scheduled": listScheduledCommand,
+  "remove-scheduled": removeScheduledCommand,
 }
 
 /**
- * Handle all interaction events (commands, buttons, etc.)
+ * Map of command names to their display status
+ * Shows users what the bot is doing in real-time
+ */
+const commandStatusText = {
+  "setup-reaction-roles": "Setting up Reaction Roles",
+  "setup-welcome": "Configuring Welcome Messages",
+  "setup-leave": "Configuring Leave Messages",
+  "remove-reaction-roles": "Removing Reaction Roles",
+  reset: "Resetting Configuration",
+  "setup-leveling": "Setting up Leveling System",
+  "add-level-role": "Adding Level Role Reward",
+  rank: "Checking User Rank",
+  leaderboard: "Generating Leaderboard",
+  "schedule-message": "Scheduling Message",
+  "list-scheduled": "Listing Scheduled Messages",
+  "remove-scheduled": "Removing Scheduled Message",
+}
+
+/**
+ * Handle all interaction events (commands, buttons, autocomplete, etc.)
  * @param {Interaction} interaction - Discord interaction object
  */
 export async function handleInteractionCreate(interaction) {
-  // Handle slash commands
+  if (interaction.isAutocomplete()) {
+    await handleAutocomplete(interaction)
+    return
+  }
+
   if (interaction.isChatInputCommand()) {
     await handleSlashCommand(interaction)
   }
 
-  // Handle button interactions (for future dashboard features)
   if (interaction.isButton()) {
     await handleButtonInteraction(interaction)
   }
@@ -54,11 +92,14 @@ async function handleSlashCommand(interaction) {
   }
 
   try {
+    const statusText = commandStatusText[interaction.commandName] || "Processing Command"
+    setTemporaryStatus(statusText, ActivityType.Playing, 8000) // Show for 8 seconds
+
     // Show typing indicator (bot appears to be typing)
     await interaction.deferReply({ flags: 64 })
 
     // Simulate processing time (realistic bot behavior)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 800))
 
     // Execute the command
     await command.execute(interaction)
@@ -77,10 +118,28 @@ async function handleSlashCommand(interaction) {
 }
 
 /**
+ * Handle autocomplete interactions
+ * @param {AutocompleteInteraction} interaction - Autocomplete interaction
+ */
+async function handleAutocomplete(interaction) {
+  const command = commands[interaction.commandName]
+
+  if (!command || !command.autocomplete) {
+    return interaction.respond([])
+  }
+
+  try {
+    await command.autocomplete(interaction)
+  } catch (error) {
+    log.error(`Error in autocomplete for ${interaction.commandName}`, error)
+    await interaction.respond([])
+  }
+}
+
+/**
  * Handle button click interactions
  * @param {ButtonInteraction} interaction - Button interaction
  */
 async function handleButtonInteraction(interaction) {
-  // Placeholder for future dashboard button handlers
   log.event(`Button clicked: ${interaction.customId} by ${interaction.user.tag}`)
 }

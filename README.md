@@ -14,6 +14,9 @@ Think of this bot as your server's personal assistant. It handles the boring stu
 - **Reaction Roles** - Members click an emoji, they get a role. It's that simple. Perfect for game roles, color roles, notification preferences, or anything else you can think of.
 - **Welcome Messages** - Give new members a warm greeting with beautiful embedded messages that show them they're valued.
 - **Leave Messages** - Say goodbye with class when members leave your server.
+- **Leveling System** - Reward active members with XP for chatting. Members level up automatically and can earn special roles at specific levels. View leaderboards and track progress with instant XP notifications.
+- **Multi-Server Support** - Run one bot instance across unlimited Discord servers. Each server has completely independent configurations and data.
+- **Scheduled Messages** - Set up automatic announcements that repeat daily, weekly, or at custom intervals. Perfect for reminders and recurring messages.
 - **Smart Activity Status** - Your bot stays interesting with rotating status messages that change automatically every few minutes.
 - **Modern Slash Commands** - No more remembering weird prefixes. Everything works with Discord's built-in slash command system.
 - **Typing Indicators** - The bot shows it's working when processing your commands, just like a real person would.
@@ -30,10 +33,6 @@ This project is actively being developed, and some exciting features are on the 
 - **Advanced Analytics** - Track member growth, popular roles, and server statistics
 - **Custom Commands** - Create your own commands without touching code
 - **Auto-Moderation** - Automatic spam protection and word filtering
-- **Leveling System** - Reward active members with XP and level-up roles
-- **Multi-Server Support** - Run one bot across multiple Discord servers
-- **Database Integration** - PostgreSQL or MongoDB for production deployments
-- **Scheduled Messages** - Automatic announcements and reminders
 - **And much more!** - This bot is just getting started
 
 ## Before You Begin
@@ -60,7 +59,9 @@ Click the "Bot" tab on the left sidebar, then click "Add Bot". Discord will ask 
 
 Now here's the important part: Under the Token section, click "Reset Token". Discord will show you a long string of random characters - click Copy immediately. This is your `DISCORD_TOKEN`.
 
-**Important**: This token is like a password to your bot. Never share it with anyone, never post it online, and never commit it to GitHub. If someone gets your token, they can control your bot.
+> [!IMPORTANT]
+> This token is like a password to your bot. Never share it with anyone, never post it online, and never commit it to GitHub.
+> If someone gets your token, they can control your bot.
 
 ### Step 4: Turn On the Right Permissions
 
@@ -208,6 +209,23 @@ Most of the time, you'll just use `make run` and you're good to go!
 
 ## Using the Bot
 
+### Command Permissions
+
+**Admin-Only Commands** (Require Administrator Permission):
+- All setup commands (`/setup-*`)
+- `/add-level-role` - Configure level rewards
+- `/schedule-message` - Create scheduled messages
+- `/list-scheduled` - View scheduled messages
+- `/remove-scheduled` - Delete scheduled messages
+- `/remove-reaction-roles` - Remove reaction role configs
+- `/reset` - Reset all bot configurations
+
+**Public Commands** (Available to All Members):
+- `/rank [user]` - Check your level and XP
+- `/leaderboard [limit]` - View the server leaderboard
+
+Only server administrators (members with the Administrator permission) can configure and set up the bot. Regular members can use public commands like viewing ranks and leaderboards.
+
 ### Setting Up Reaction Roles
 
 First, create or choose the roles you want to use (Server Settings > Roles). Get each role's ID by right-clicking it and selecting "Copy Role ID".
@@ -229,150 +247,198 @@ Example:
 roles: 🎮:123456789,🎨:987654321,🎵:555555555
 ```
 
-### Setting Up Welcome Messages
+### Setting Up the Leveling System
 
-Run this command to greet new members:
-
-```
-/setup-welcome
-  channel: #welcome
-  message: Welcome {user} to {server}! You are member #{count}!
-  embed-color: #00ff00
-```
-
-You can use these placeholders in your message:
-- `{user}` - Mentions the new member
-- `{server}` - Your server's name
-- `{count}` - Total member count
-
-### Setting Up Leave Messages
-
-Say goodbye when someone leaves:
+Enable XP and leveling for your server:
 
 ```
-/setup-leave
-  channel: #goodbye
-  message: Goodbye {user}! Thanks for being part of {server}
-  embed-color: #ff0000
+/setup-leveling
+  enabled: True
+  announce-channel: #level-ups
+  xp-min: 15
+  xp-max: 25
+  cooldown: 60
+  announce-level: True
+  announce-xp: True
 ```
 
-Available placeholders:
-- `{user}` - The member's username
-- `{server}` - Your server's name
+Options explained:
+- **enabled** - Turn the leveling system on or off
+- **announce-channel** - Where to send XP and level-up notifications (required for announcements)
+- **xp-min** - Minimum XP per message (default: 15)
+- **xp-max** - Maximum XP per message (default: 25)
+- **cooldown** - Seconds between XP gains (default: 60)
+- **announce-level** - Send notification when members level up (default: true)
+- **announce-xp** - Send instant notification when members earn XP (default: false)
 
-### Removing Reaction Roles
+**Add Level Rewards:**
 
-If you want to remove a reaction role message, right-click the message, select "Copy Message ID", then run:
-
-```
-/remove-reaction-roles
-  message-id: 1234567890123456789
-```
-
-### Resetting All Configurations
-
-If you want to start fresh and remove all bot configurations:
+Give members roles when they reach specific levels:
 
 ```
-/reset
+/add-level-role
+  level: 5
+  role: @Active Member
 ```
 
-This removes all reaction roles, welcome settings, and leave settings. Use this carefully - there's no undo!
+Now when someone reaches level 5, they automatically get the "Active Member" role!
+
+**Check Your Progress:**
+
+```
+/rank              # Check your own level
+/rank user: @someone   # Check another user's level
+```
+
+**View Leaderboard:**
+
+```
+/leaderboard       # Top 10 members
+/leaderboard limit: 25   # Top 25 members
+```
+
+### Setting Up Scheduled Messages
+
+Create automatic recurring announcements:
+
+**Daily Messages:**
+
+```
+/schedule-message
+  name: daily-reminder
+  channel: #announcements
+  type: Daily
+  time: 14:30
+  message: Don't forget to check the rules!
+```
+
+**Weekly Messages:**
+
+```
+/schedule-message
+  name: weekly-event
+  channel: #events
+  type: Weekly
+  time: 18:00
+  day-of-week: 5 (Friday)
+  message: Weekend event starts now!
+```
+
+**Interval Messages:**
+
+```
+/schedule-message
+  name: status-update
+  channel: #status
+  type: Interval
+  time: 60 (minutes)
+  message: Bot is running smoothly!
+```
+
+> [!CAUTION]
+> All times are in **UTC timezone**. Use 24-hour format (HH:MM) like 14:30 for 2:30 PM or 09:00 for 9:00 AM.
+
+**View Scheduled Messages:**
+
+```
+/list-scheduled
+```
+
+**Remove Scheduled Messages:**
+
+```
+/remove-scheduled
+  name: daily-reminder
+```
 
 ## Important Things to Know
 
-### Role Hierarchy Matters
+### Multi-Server Support
 
-Discord has a role hierarchy system. Your bot can only assign roles that are **below** its own role in the list. To fix this:
+This bot works across multiple Discord servers simultaneously:
+- Each server has completely independent configurations
+- XP and levels are tracked separately per server
+- Scheduled messages only run in their configured server
+- Reaction roles and welcome/leave messages are server-specific
+- No interference between servers - they operate independently
 
-1. Go to Server Settings > Roles
-2. Find your bot's role
-3. Drag it above all the roles it needs to assign
-4. Save and you're good to go
+### Leveling System
 
-### Channel Permissions
+- Members earn XP by chatting (not by spamming - there's a cooldown)
+- XP ranges and cooldowns are configurable per server
+- Level-up roles are assigned automatically
+- All XP data is stored per server (members have different levels in different servers)
+- Instant XP notifications show members when they earn points with their total XP
+- Level-up announcements celebrate member achievements
 
-Make sure your bot can actually access the channels you configure:
-- For reaction roles: Read Messages, Send Messages, Add Reactions, Read Message History
-- For welcome/leave messages: View Channel, Send Messages, Embed Links
+### Scheduled Messages
 
-### Testing Your Setup
-
-After configuration, test everything:
-1. React to your reaction role message - do you get the role?
-2. Have a friend join (or use a test account) - does the welcome message appear?
-3. Have someone leave - does the goodbye message show up?
+- All times must be in **UTC timezone** (24-hour format: HH:MM)
+- Messages activate immediately when created (no bot restart needed)
+- Daily messages send at the same time every day
+- Weekly messages send on a specific day of the week
+- Interval messages repeat every X minutes
+- All scheduled messages persist across bot restarts
 
 ## When Things Go Wrong
 
-### Reaction Roles Aren't Working
+### Leveling System Issues
 
-- Double-check that the bot has "Read Message History" permission in that channel
-- Make sure the role IDs are correct - copy them fresh from Discord
-- Verify the bot's role is higher than the roles it's trying to assign
-- Try restarting the bot after making role changes
+- **XP not being earned**: Check that leveling is enabled with `/setup-leveling enabled: True`
+- **No notifications appearing**: Make sure you set an announce-channel and enabled announcements
+- **Roles not being assigned**: Verify the bot's role is higher than the roles it's trying to assign
+- **Wrong XP amounts**: Adjust xp-min and xp-max in the setup command
 
-### Slash Commands Don't Appear
+### Scheduled Messages Not Sending
 
-- Wait up to an hour - sometimes Discord takes a while to register commands
-- Make sure you invited the bot with the `applications.commands` scope
-- Check that your `GUILD_ID` in the `.env` file is correct
-- Try kicking and reinviting the bot
+- **Check the time format**: Must be HH:MM in 24-hour format (e.g., 14:30, not 2:30 PM)
+- **Verify timezone**: All times are in UTC - calculate your local offset
+- **Channel permissions**: Bot needs permission to send messages in the configured channel
+- **Check if enabled**: Use `/list-scheduled` to verify the message is active
 
-### Welcome or Leave Messages Aren't Sending
+## Project Structure
 
-- Verify the channel ID is correct
-- Make sure the bot has permission to send messages in that channel
-- Check that "SERVER MEMBERS INTENT" is enabled in the Developer Portal
-- Look at the console output for permission error messages
+Here's how the code is organized:
 
-### Bot Crashes on Startup
-
-- Check that all values in `.env` are correct and there are no extra spaces
-- Make sure your bot token is still valid (regenerate it if needed)
-- Verify Node.js is version 18 or higher by running `node --version`
-- Try `make reinstall` to get fresh dependencies
-
-### "Missing Permissions" Errors
-
-- Go to Server Settings > Roles and find your bot's role
-- Enable all the permissions it needs manually
-- Drag the bot's role higher in the hierarchy
-- Make sure channel-specific permissions aren't blocking the bot
-
-## Making It Your Own
-
-### Changing Bot Activities
-
-Edit `src/utils/activityManager.js` and customize the activities array:
-
-```js
-const activities = [
-  { name: 'Managing your roles', type: ActivityType.Playing },
-  { name: 'for new members', type: ActivityType.Watching },
-  { name: '/help for commands', type: ActivityType.Listening },
-];
 ```
-
-Activity types you can use:
-- `ActivityType.Playing` - "Playing ..."
-- `ActivityType.Watching` - "Watching ..."
-- `ActivityType.Listening` - "Listening to ..."
-- `ActivityType.Streaming` - "Streaming ..." (needs a URL)
-- `ActivityType.Competing` - "Competing in ..."
-
-### Changing How Often Activities Rotate
-
-In `src/utils/activityManager.js`, adjust these values:
-
-```js
-const minInterval = 2 * 60 * 1000; // 2 minutes in milliseconds
-const maxInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
+discord-role-guardian/
+├── src/
+│   ├── commands/              # All the slash command files
+│   │   ├── addLevelRole.js       
+│   │   ├── leaderboard.js        
+│   │   ├── listScheduled.js      
+│   │   ├── rank.js               
+│   │   └── reset.js
+│   │   ├── removeScheduled.js    
+│   │   ├── removeReactionRoles.js
+|   |   ├── setup.js
+│   │   ├── setupLeave.js
+│   │   ├── setupWelcome.js
+│   │   ├── setupLeveling.js      
+│   │   ├── scheduleMessage.js    
+│   │   ├── setupReactionRoles.js
+|   ├── config/              # Role config logic
+│   │   ├── roleConfig.js.js
+│   ├── data/                  # Data storage
+│   │   ├── storage.js
+│   │   └── config.json       # Generated at runtime
+│   ├── handlers/              # Event handling logic
+│   │   ├── interactionHandler.js
+│   │   ├── memberEvents.js
+│   │   ├── reactionRoles.js
+│   │   ├── levelingSystem.js     
+│   │   └── scheduledMessages.js  
+│   ├── utils/                 # Helper functions
+│   │   ├── activityManager.js
+│   │   ├── colors.js
+│   │   └── commandRegistry.js
+│   └── index.js               # Main bot file
+├── .env.example               # Template for .env
+├── Dockerfile                 # Docker setup for containerization
+├── Makefile                   # Easy commands for running the bot
+├── package.json               # Dependencies and scripts
+└── README.md                  # You're reading it right now
 ```
-
-### Customizing Console Colors
-
-Don't like the color scheme in the terminal? Edit `src/utils/colors.js` to change them to whatever you prefer.
 
 ## Contributing
 
