@@ -45,15 +45,10 @@ export async function registerCommands(client) {
   try {
     log.system("Registering slash commands...")
 
-    if (process.env.GUILD_ID) {
-      await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), {
-        body: commandsData,
-      })
-      log.success(`Registered ${commands.length} commands for guild ${process.env.GUILD_ID}`)
-    } else {
-      await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commandsData })
-      log.success(`Registered ${commands.length} commands globally (may take up to 1 hour)`)
-    }
+    // GUILD_ID is no longer needed for multi-server bots
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commandsData })
+    log.success(`Registered ${commands.length} commands globally across all servers`)
+    log.info("Commands will be available in 5-10 minutes (Discord API propagation)")
   } catch (error) {
     log.error("Error registering commands", error)
     throw error
