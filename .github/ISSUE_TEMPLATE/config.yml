@@ -1,0 +1,10 @@
+name: Configuration
+description: Configuration for issue templates
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/nayandas69/discord-role-guardian?tab=readme-ov-file#discord-role-guardian
+    about: Check the README for setup instructions and troubleshooting
+  - name: Discord Support Server
+    url: https://discord.gg/
+    about: Join our Discord server for quick help and support

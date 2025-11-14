@@ -1,0 +1,96 @@
+name: Feature Request
+description: Suggest a new feature for the bot
+title: "[Feature]: "
+labels: ["enhancement", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please describe your idea below.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What type of feature are you suggesting?
+      options:
+        - Moderation (kick, ban, warn, timeout)
+        - Utility (polls, reminders, announcements)
+        - Fun (games, music, entertainment)
+        - Economy (coins, shop, rewards)
+        - Logging (message logs, audit logs)
+        - Tickets (improvements to ticket system)
+        - Leveling (improvements to leveling system)
+        - Role Management (auto-roles, role menus)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Describe the feature you'd like to see added
+      placeholder: "I would like the bot to have a /poll command that creates polls with multiple options..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: What problem does this feature solve? Why do you need it?
+      placeholder: "Currently there's no easy way to create polls for server decisions. This would help gather community feedback quickly."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this feature working?
+      placeholder: |
+        - Run /poll command with question and options
+        - Bot creates an embed with reactions
+        - Users vote by clicking reactions
+        - Results shown after time expires
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative approaches?
+      placeholder: "Alternatively, this could be done with buttons instead of reactions"
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples
+      description: Are there any bots or apps that have similar features?
+      placeholder: "MEE6 has a poll system that works like this..."
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve experience
+        - High - Essential for my server
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing feature requests to avoid duplicates
+          required: true
+        - label: This feature fits the scope of a Discord bot
+          required: true
+        - label: I understand this is a suggestion and may not be implemented
+          required: true

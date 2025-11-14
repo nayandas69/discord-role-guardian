@@ -1,0 +1,106 @@
+name: Bug Report
+description: Report a bug or issue with the bot
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us fix the issue.
+
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Which feature is affected?
+      description: Select the feature where you encountered the bug
+      options:
+        - Leveling System
+        - Ticket System
+        - Scheduled Messages
+        - Welcome/Leave Messages
+        - Bot Commands
+        - Role Management
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What happened? Please provide a clear description of the bug.
+      placeholder: "Example: When I run /setup-ticket, the bot responds with an error message..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Run command /setup-ticket
+        2. Select a channel
+        3. Bot shows error message
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: "The bot should create a ticket panel in the selected channel"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: "The bot showed an error message instead"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: If you have any error logs or screenshots, paste them here
+      placeholder: |
+        Paste error messages or attach screenshots here
+      render: shell
+
+  - type: dropdown
+    id: hosting
+    attributes:
+      label: Where is your bot hosted?
+      options:
+        - Railway
+        - Heroku
+        - Local Machine
+        - VPS/Cloud Server
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Bot Version
+      description: What version of the bot are you running? (Check package.json)
+      placeholder: "1.0.0"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm the following before submitting
+      options:
+        - label: I have checked the bot has all required permissions
+          required: true
+        - label: I have verified my bot token is correct
+          required: true
+        - label: I have searched existing issues for duplicates
+          required: true
