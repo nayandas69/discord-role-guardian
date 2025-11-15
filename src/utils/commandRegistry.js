@@ -16,6 +16,8 @@ import { leaderboardCommand } from "../commands/leaderboard.js"
 import { scheduleMessageCommand } from "../commands/scheduleMessage.js"
 import { listScheduledCommand } from "../commands/listScheduled.js"
 import { removeScheduledCommand } from "../commands/removeScheduled.js"
+import { setupTicketCommand } from "../commands/setupTicket.js"
+import { ticketStatsCommand } from "../commands/ticketStats.js"
 import log from "./colors.js"
 
 /**
@@ -36,6 +38,8 @@ export async function registerCommands(client) {
     scheduleMessageCommand,
     listScheduledCommand,
     removeScheduledCommand,
+    setupTicketCommand,
+    ticketStatsCommand,
   ]
 
   const commandsData = commands.map((cmd) => cmd.data.toJSON())

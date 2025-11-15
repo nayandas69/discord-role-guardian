@@ -19,6 +19,8 @@ let leaveConfigs = new Map() // guildId -> leaveConfig
 let levelingConfigs = new Map() // guildId -> levelingConfig
 let userLevels = new Map() // guildId-userId -> { xp, level }
 let scheduledMessages = new Map() // guildId -> scheduledMessage[]
+let ticketConfigs = new Map() // guildId -> ticketConfig
+let tickets = new Map() // guildId -> ticket[]
 
 /**
  * Ensure data directory exists with proper error handling
@@ -71,6 +73,12 @@ export function loadAllConfigs() {
       if (data.scheduledMessages) {
         scheduledMessages = new Map(data.scheduledMessages)
       }
+      if (data.ticketConfigs) {
+        ticketConfigs = new Map(data.ticketConfigs)
+      }
+      if (data.tickets) {
+        tickets = new Map(data.tickets)
+      }
 
       log.success(`Loaded configurations from: ${STORAGE_FILE}`)
       log.info(
@@ -79,6 +87,7 @@ export function loadAllConfigs() {
       log.info(
         `Loaded: ${levelingConfigs.size} leveling configs, ${userLevels.size} user levels, ${scheduledMessages.size} scheduled messages`,
       )
+      log.info(`Loaded: ${ticketConfigs.size} ticket configs, ${tickets.size} ticket servers`)
       log.success("Persistent storage verified - configurations survived restart!")
     } else {
       log.info("No existing configuration file found, starting fresh")
@@ -102,6 +111,8 @@ function saveToFile() {
       levelingConfigs: Array.from(levelingConfigs.entries()),
       userLevels: Array.from(userLevels.entries()),
       scheduledMessages: Array.from(scheduledMessages.entries()),
+      ticketConfigs: Array.from(ticketConfigs.entries()),
+      tickets: Array.from(tickets.entries()),
       lastSaved: new Date().toISOString(),
       version: "1.0.0",
     }
@@ -380,6 +391,120 @@ export function removeScheduledMessage(guildId, messageId) {
 }
 
 /**
+ * TICKET SYSTEM STORAGE
+ */
+
+/**
+ * Save ticket configuration for a guild
+ * @param {string} guildId - Discord guild ID
+ * @param {Object} config - Ticket configuration
+ */
+export function saveTicketConfig(guildId, config) {
+  if (config.staffRoleId && !config.staffRoleIds) {
+    config.staffRoleIds = [config.staffRoleId]
+  }
+  
+  ticketConfigs.set(guildId, config)
+  saveToFile()
+  log.system(`Saved ticket config for guild: ${guildId}`)
+  log.info(`Panel: ${config.panelChannelId}, Category: ${config.categoryId}`)
+  log.info(`Staff roles: ${config.staffRoleIds?.length || 0} configured`)
+}
+
+/**
+ * Get ticket configuration for a guild
+ * @param {string} guildId - Discord guild ID
+ * @returns {Object|null} Ticket config or null
+ */
+export function getTicketConfig(guildId) {
+  return ticketConfigs.get(guildId) || null
+}
+
+/**
+ * Create a new ticket
+ * @param {string} guildId - Discord guild ID
+ * @param {Object} ticketData - Ticket data
+ */
+export function createTicket(guildId, ticketData) {
+  const current = tickets.get(guildId) || []
+  current.push(ticketData)
+  tickets.set(guildId, current)
+
+  const config = ticketConfigs.get(guildId)
+  if (config) {
+    config.ticketCount = (config.ticketCount || 0) + 1
+    ticketConfigs.set(guildId, config)
+  }
+
+  saveToFile()
+  log.system(`Created ticket ${ticketData.ticketNumber} for guild: ${guildId}`)
+}
+
+/**
+ * Get a specific ticket by ID
+ * @param {string} guildId - Discord guild ID
+ * @param {string} ticketId - Ticket ID
+ * @returns {Object|null} Ticket data or null
+ */
+export function getTicket(guildId, ticketId) {
+  const guildTickets = tickets.get(guildId) || []
+  return guildTickets.find((t) => t.id === ticketId) || null
+}
+
+/**
+ * Update ticket data
+ * @param {string} guildId - Discord guild ID
+ * @param {string} ticketId - Ticket ID
+ * @param {Object} updates - Data to update
+ */
+export function updateTicket(guildId, ticketId, updates) {
+  const guildTickets = tickets.get(guildId) || []
+  const ticketIndex = guildTickets.findIndex((t) => t.id === ticketId)
+
+  if (ticketIndex >= 0) {
+    guildTickets[ticketIndex] = { ...guildTickets[ticketIndex], ...updates }
+    tickets.set(guildId, guildTickets)
+    saveToFile()
+    log.system(`Updated ticket ${ticketId}`)
+  }
+}
+
+/**
+ * Close a ticket
+ * @param {string} guildId - Discord guild ID
+ * @param {string} ticketId - Ticket ID
+ */
+export function closeTicket(guildId, ticketId) {
+  const guildTickets = tickets.get(guildId) || []
+  const ticketIndex = guildTickets.findIndex((t) => t.id === ticketId)
+
+  if (ticketIndex >= 0) {
+    guildTickets[ticketIndex].status = "closed"
+    guildTickets[ticketIndex].closedAt = Date.now()
+    tickets.set(guildId, guildTickets)
+    saveToFile()
+    log.system(`Closed ticket ${ticketId}`)
+  }
+}
+
+/**
+ * Get active tickets for a guild or user
+ * @param {string} guildId - Discord guild ID
+ * @param {string} userId - Optional user ID to filter
+ * @returns {Array} Active tickets
+ */
+export function getActiveTickets(guildId, userId = null) {
+  const guildTickets = tickets.get(guildId) || []
+  let activeTickets = guildTickets.filter((t) => t.status === "open" || t.status === "claimed")
+
+  if (userId) {
+    activeTickets = activeTickets.filter((t) => t.userId === userId)
+  }
+
+  return activeTickets
+}
+
+/**
  * RESET ALL CONFIGURATIONS
  */
 
@@ -392,6 +517,8 @@ export function resetGuildConfig(guildId) {
   leaveConfigs.delete(guildId)
   levelingConfigs.delete(guildId)
   scheduledMessages.delete(guildId)
+  ticketConfigs.delete(guildId)
+  tickets.delete(guildId)
 
   let removedCount = 0
   for (const [messageId, config] of reactionRoles.entries()) {
@@ -412,7 +539,7 @@ export function resetGuildConfig(guildId) {
   saveToFile()
   log.success(`Reset all configurations for guild: ${guildId}`)
   log.info(
-    `Removed: welcome config, leave config, ${removedCount} reaction role configs, leveling config, ${removedLevels} user levels, scheduled messages`,
+    `Removed: welcome config, leave config, ${removedCount} reaction role configs, leveling config, ${removedLevels} user levels, scheduled messages, ticket config`,
   )
 
   return {
@@ -422,6 +549,7 @@ export function resetGuildConfig(guildId) {
     levelingRemoved: true,
     userLevelsRemoved: removedLevels,
     scheduledMessagesRemoved: true,
+    ticketConfigRemoved: true,
   }
 }
 
@@ -442,6 +570,8 @@ export function exportAllConfigs() {
     levelingConfigs: Array.from(levelingConfigs.entries()),
     userLevels: Array.from(userLevels.entries()),
     scheduledMessages: Array.from(scheduledMessages.entries()),
+    ticketConfigs: Array.from(ticketConfigs.entries()),
+    tickets: Array.from(tickets.entries()),
   }
 }
 
@@ -468,10 +598,16 @@ export function importConfigs(data) {
   if (data.scheduledMessages) {
     data.scheduledMessages.forEach(([key, value]) => scheduledMessages.set(key, value))
   }
+  if (data.ticketConfigs) {
+    data.ticketConfigs.forEach(([key, value]) => ticketConfigs.set(key, value))
+  }
+  if (data.tickets) {
+    data.tickets.forEach(([key, value]) => tickets.set(key, value))
+  }
   saveToFile()
   log.success("Configurations imported successfully")
   log.info(
-    `Imported: ${data.reactionRoles?.length || 0} reaction roles, ${data.welcomeConfigs?.length || 0} welcome configs, ${data.leaveConfigs?.length || 0} leave configs`,
+    `Imported: ${data.reactionRoles?.length || 0} reaction roles, ${data.welcomeConfigs?.length || 0} welcome configs, ${data.leaveConfigs?.length || 0} leave configs, ${data.ticketConfigs?.length || 0} ticket configs`,
   )
 }
 
@@ -493,6 +629,8 @@ export function getStorageStats() {
       levelingConfigCount: levelingConfigs.size,
       userLevelCount: userLevels.size,
       scheduledMessageCount: scheduledMessages.size,
+      ticketConfigCount: ticketConfigs.size,
+      ticketCount: tickets.size,
     }
   } catch (error) {
     return {

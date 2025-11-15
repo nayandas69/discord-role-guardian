@@ -18,6 +18,9 @@ import { removeScheduledCommand } from "../commands/removeScheduled.js"
 import { setTemporaryStatus } from "../utils/activityManager.js"
 import { ActivityType } from "discord.js"
 import log from "../utils/colors.js"
+import { setupTicketCommand } from "../commands/setupTicket.js"
+import { ticketStatsCommand } from "../commands/ticketStats.js"
+import { handleTicketCreate, handleTicketClaim, handleTicketClose } from "../handlers/ticketSystem.js"
 
 /**
  * Map of command names to their handler functions
@@ -35,6 +38,8 @@ const commands = {
   "schedule-message": scheduleMessageCommand,
   "list-scheduled": listScheduledCommand,
   "remove-scheduled": removeScheduledCommand,
+  "setup-ticket": setupTicketCommand,
+  "ticket-stats": ticketStatsCommand,
 }
 
 /**
@@ -54,6 +59,8 @@ const commandStatusText = {
   "schedule-message": "Scheduling Message",
   "list-scheduled": "Listing Scheduled Messages",
   "remove-scheduled": "Removing Scheduled Message",
+  "setup-ticket": "Setting up Ticket System",
+  "ticket-stats": "Fetching Ticket Statistics",
 }
 
 /**
@@ -113,7 +120,11 @@ async function handleSlashCommand(interaction) {
       content: "An error occurred while executing this command! Please check bot permissions and try again.",
     }
 
-    await interaction.editReply(errorMessage)
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply(errorMessage)
+    } else {
+      await interaction.reply({ ...errorMessage, flags: 64 })
+    }
   }
 }
 
@@ -142,4 +153,16 @@ async function handleAutocomplete(interaction) {
  */
 async function handleButtonInteraction(interaction) {
   log.event(`Button clicked: ${interaction.customId} by ${interaction.user.tag}`)
+
+  if (interaction.customId === "create_ticket") {
+    return handleTicketCreate(interaction)
+  }
+
+  if (interaction.customId.startsWith("ticket_claim_")) {
+    return handleTicketClaim(interaction)
+  }
+
+  if (interaction.customId.startsWith("ticket_close_")) {
+    return handleTicketClose(interaction)
+  }
 }

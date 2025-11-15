@@ -32,7 +32,12 @@ async function execute(interaction) {
         `**Reset Complete**\n\nAll bot configurations have been reset for this server:\n\n` +
         `• Welcome messages: Removed\n` +
         `• Leave messages: Removed\n` +
-        `• Reaction roles: Removed ${result.reactionRolesRemoved} configuration(s)\n\n` +
+        `• Reaction roles: Removed ${result.reactionRolesRemoved} configuration(s)\n` +
+        `• Leveling system: Removed (all user XP/levels cleared)\n` +
+        `• Scheduled messages: Removed\n` +
+        `• Ticket system: Removed (panel, category, staff roles)\n` +
+        `• Ticket data: Removed (all open and closed tickets)\n\n` +
+        `⚠️ Note: Existing ticket channels must be deleted manually.\n\n` +
         `You can now set up the bot again using the setup commands.`,
     })
 
