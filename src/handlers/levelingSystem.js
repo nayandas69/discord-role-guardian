@@ -3,6 +3,12 @@
  * Tracks message activity and awards experience points
  * Automatically assigns roles when members reach specific levels
  * Author: nayandas69
+ * 
+ * Features:
+ * - Comprehensive permission checks before any Discord API calls
+ * - Graceful error handling with detailed logging
+ * - Fallback mechanisms when permissions are missing
+ * - Memory-efficient cooldown management
  */
 
 import { PermissionsBitField, ActivityType } from "discord.js"
@@ -36,6 +42,46 @@ function calculateLevel(totalXP) {
 }
 
 /**
+ * Check if bot has required permissions in a channel
+ * Prevents DiscordAPIError[50013]: Missing Permissions
+ * @param {Channel} channel - Discord channel to check
+ * @param {Array<string>} permissions - Required permission flags
+ * @returns {Object} { hasPermission: boolean, missing: Array<string> }
+ */
+function checkBotPermissions(channel, permissions = []) {
+  try {
+    if (!channel || !channel.guild) {
+      return { hasPermission: false, missing: ["Invalid channel"] }
+    }
+
+    const botMember = channel.guild.members.me
+    if (!botMember) {
+      return { hasPermission: false, missing: ["Bot not in guild"] }
+    }
+
+    const channelPermissions = channel.permissionsFor(botMember)
+    if (!channelPermissions) {
+      return { hasPermission: false, missing: ["Cannot read channel permissions"] }
+    }
+
+    const missing = []
+    for (const permission of permissions) {
+      if (!channelPermissions.has(permission)) {
+        missing.push(permission)
+      }
+    }
+
+    return {
+      hasPermission: missing.length === 0,
+      missing: missing,
+    }
+  } catch (error) {
+    log.error("Error checking bot permissions", error)
+    return { hasPermission: false, missing: ["Permission check failed"] }
+  }
+}
+
+/**
  * Award level-up role to member if configured
  * @param {GuildMember} member - Discord guild member
  * @param {number} newLevel - Newly achieved level
@@ -62,12 +108,19 @@ async function awardLevelRole(member, newLevel) {
     const botMember = member.guild.members.me
     if (!botMember.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
       log.error("Bot missing MANAGE_ROLES permission for leveling system")
+      log.warn(`Cannot assign ${role.name} to ${member.user.tag} - missing permissions`)
       return
     }
 
     // Check if bot's role is higher than the role being assigned
     if (botMember.roles.highest.position <= role.position) {
       log.error(`Bot role position too low to assign ${role.name}`)
+      log.warn(`Move bot's role above ${role.name} in server settings`)
+      return
+    }
+
+    if (member.roles.cache.has(role.id)) {
+      log.info(`${member.user.tag} already has ${role.name}, skipping assignment`)
       return
     }
 
@@ -81,33 +134,70 @@ async function awardLevelRole(member, newLevel) {
 
 /**
  * Send level-up notification to channel
+ * Production-ready with comprehensive permission validation
  * @param {Message} message - Original message that triggered level up
  * @param {number} newLevel - Newly achieved level
  */
 async function sendLevelUpMessage(message, newLevel) {
   try {
     const config = getLevelingConfig(message.guild.id)
-    if (!config || !config.announceChannel) return
+    
+    // Check if announcements are enabled
+    if (!config || !config.announceChannel) {
+      log.info("Level-up announcements not configured, skipping notification")
+      return
+    }
 
+    // Get the announcement channel
     const channel = message.guild.channels.cache.get(config.announceChannel)
-    if (!channel) return
+    if (!channel) {
+      log.warn(`Announcement channel ${config.announceChannel} not found`)
+      log.warn("Please reconfigure leveling system with /setup-leveling")
+      return
+    }
+
+    const requiredPermissions = [
+      PermissionsBitField.Flags.ViewChannel,
+      PermissionsBitField.Flags.SendMessages,
+      PermissionsBitField.Flags.EmbedLinks,
+    ]
+
+    const permCheck = checkBotPermissions(channel, requiredPermissions)
+    if (!permCheck.hasPermission) {
+      log.error(`Missing permissions in ${channel.name}: ${permCheck.missing.join(", ")}`)
+      log.warn(`Grant bot these permissions: ${permCheck.missing.join(", ")}`)
+      log.warn("Level-up notification skipped due to missing permissions")
+      return
+    }
 
     setTemporaryStatus(`Level Up: ${message.author.username}`, ActivityType.Watching, 6000)
+
+    const currentLevelXP = calculateRequiredXP(newLevel)
+    const nextLevelXP = calculateRequiredXP(newLevel + 1)
+    const xpNeededForNext = nextLevelXP - currentLevelXP
 
     // Create level-up announcement embed
     const embed = {
       color: 0x00ff00, // Green color for success
-      title: "Level Up!",
+      title: "🏆 Level Up!",
       description: `Congratulations ${message.author}! You've reached **Level ${newLevel}**!`,
       fields: [
         {
-          name: "Next Level",
-          value: `${calculateRequiredXP(newLevel + 1) - calculateRequiredXP(newLevel)} XP needed`,
+          name: "𝐋𝑉 Progress",
+          value: `You now have **${currentLevelXP} XP**`,
+          inline: true,
+        },
+        {
+          name: "🎯 Next Level",
+          value: `${xpNeededForNext} XP needed for Level ${newLevel + 1}`,
           inline: true,
         },
       ],
       thumbnail: {
-        url: message.author.displayAvatarURL(),
+        url: message.author.displayAvatarURL({ dynamic: true }),
+      },
+      footer: {
+        text: `Keep chatting to earn more XP! • ${message.guild.name}`,
       },
       timestamp: new Date().toISOString(),
     }
@@ -115,7 +205,14 @@ async function sendLevelUpMessage(message, newLevel) {
     await channel.send({ embeds: [embed] })
     log.event(`Level-up notification sent for ${message.author.tag} (Level ${newLevel})`)
   } catch (error) {
-    log.error("Error sending level-up message", error)
+    if (error.code === 50013) {
+      log.error(`Missing Permissions to send level-up message in ${message.guild.name}`)
+      log.warn("Check bot role permissions: View Channel, Send Messages, Embed Links")
+    } else if (error.code === 10003) {
+      log.error("Announcement channel was deleted, please reconfigure with /setup-leveling")
+    } else {
+      log.error("Error sending level-up message", error)
+    }
   }
 }
 
@@ -134,21 +231,35 @@ async function sendXPGainMessage(message, xpGained, totalXP) {
     const channel = message.guild.channels.cache.get(config.announceChannel)
     if (!channel) return
 
+    const requiredPermissions = [
+      PermissionsBitField.Flags.ViewChannel,
+      PermissionsBitField.Flags.SendMessages,
+    ]
+
+    const permCheck = checkBotPermissions(channel, requiredPermissions)
+    if (!permCheck.hasPermission) {
+      return
+    }
+
     const currentLevel = calculateLevel(totalXP)
     const nextLevelXP = calculateRequiredXP(currentLevel + 1)
     const xpNeeded = nextLevelXP - totalXP
 
     await channel.send({
-      content: `${message.author} earned **${xpGained} XP**! Total: **${totalXP} XP** (${xpNeeded} XP until level ${currentLevel + 1})`,
+      content: `${message.author} earned **+${xpGained} XP**! Total: **${totalXP} XP** (${xpNeeded} XP until Level ${currentLevel + 1})`,
     })
   } catch (error) {
-    log.error("Error sending XP gain message", error)
+    // These are frequent messages and shouldn't flood error logs
+    if (error.code === 50013) {
+      log.warn("Missing permissions for XP announcements, disabling temporarily")
+    }
   }
 }
 
 /**
  * Process message for XP and leveling
  * Called when a user sends a message in the server
+ * Production-ready with memory management and error handling
  * @param {Client} client - Discord client instance
  */
 export function setupLevelingSystem(client) {
@@ -156,33 +267,55 @@ export function setupLevelingSystem(client) {
 
   const cooldowns = new Map()
 
+  const CLEANUP_INTERVAL = 5 * 60 * 1000 // 5 minutes
+  setInterval(() => {
+    const now = Date.now()
+    let cleanedCount = 0
+    
+    for (const [key, timestamp] of cooldowns.entries()) {
+      // Remove cooldowns older than 10 minutes
+      if (now - timestamp > 10 * 60 * 1000) {
+        cooldowns.delete(key)
+        cleanedCount++
+      }
+    }
+    
+    if (cleanedCount > 0) {
+      log.system(`Cleaned ${cleanedCount} expired cooldown entries from memory`)
+    }
+  }, CLEANUP_INTERVAL)
+
   client.on("messageCreate", async (message) => {
-    if (message.author.bot || !message.guild) return
+    if (!message || message.author.bot || !message.guild || !message.author) return
 
     const config = getLevelingConfig(message.guild.id)
     if (!config || !config.enabled) return
 
     const cooldownKey = `${message.author.id}-${message.guild.id}`
     const lastXP = cooldowns.get(cooldownKey) || 0
-    const cooldownTime = config.cooldown || 60000
+    const cooldownTime = config.cooldown || 60000 // Default 60 seconds
 
+    // Check if user is still in cooldown period
     if (Date.now() - lastXP < cooldownTime) {
       return
     }
 
+    // Update cooldown timestamp
     cooldowns.set(cooldownKey, Date.now())
 
     const xpMin = config.xpMin || 15
     const xpMax = config.xpMax || 25
     const xpGained = Math.floor(Math.random() * (xpMax - xpMin + 1)) + xpMin
 
+    // Get user's current level data
     const userData = getUserLevel(message.guild.id, message.author.id)
     const oldLevel = calculateLevel(userData.xp)
 
+    // Add XP and get new total
     const newXP = addUserXP(message.guild.id, message.author.id, xpGained)
     const newLevel = calculateLevel(newXP)
 
-    if (config.announceXP) {
+    if (config.announceXP && newLevel === oldLevel) {
       await sendXPGainMessage(message, xpGained, newXP)
     }
 
@@ -192,6 +325,8 @@ export function setupLevelingSystem(client) {
       const member = message.guild.members.cache.get(message.author.id)
       if (member) {
         await awardLevelRole(member, newLevel)
+      } else {
+        log.warn(`Member ${message.author.tag} not found in cache, skipping role award`)
       }
 
       if (config.announceLevel) {
@@ -201,4 +336,5 @@ export function setupLevelingSystem(client) {
   })
 
   log.system("Leveling system active - tracking user XP and level-ups")
+  log.info("Permission checks enabled - graceful error handling active")
 }
