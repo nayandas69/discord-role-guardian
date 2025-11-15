@@ -72,19 +72,11 @@ While you're still on the Bot page, scroll down to "Privileged Gateway Intents" 
 - **SERVER MEMBERS INTENT** - Without this, welcome and leave messages won't work
 - **MESSAGE CONTENT INTENT** - This lets the bot handle reactions properly
 
-### Step 5: Get Your Server ID
-
-Open Discord and go to User Settings, then Advanced. Turn on "Developer Mode". Now right-click on your server's icon and select "Copy Server ID". Save this - it's your `GUILD_ID`.
-
-### Step 6: Grab Your Channel IDs
-
-You'll need the IDs for channels where you want welcome messages, leave messages, and reaction role setups. With Developer Mode still on, right-click any channel and choose "Copy Channel ID". Do this for each channel you plan to use.
-
-### Step 7: Get Your Role IDs
+# Step 5: Get Your Role IDs
 
 For reaction roles to work, you need role IDs. Go to Server Settings > Roles, right-click any role, and select "Copy Role ID". Do this for every role you want to assign through reactions.
 
-### Step 8: Invite Your Bot to Your Server
+### Step 6: Invite Your Bot to Your Server
 
 Back in the Developer Portal, go to OAuth2 > URL Generator. Select these scopes:
 - `bot`
@@ -108,7 +100,7 @@ Quick link (just replace YOUR_CLIENT_ID with your actual client ID):
 https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=268446928&scope=bot%20applications.commands
 ```
 
-### Step 9: Download and Install the Bot
+### Step 7: Download and Install the Bot
 
 Clone this repository to your computer and install the dependencies:
 
@@ -129,7 +121,7 @@ Or if you prefer doing it manually:
 npm install
 ```
 
-### Step 10: Set Up Your Environment Variables
+### Step 8: Set Up Your Environment Variables
 
 Copy the example environment file:
 
@@ -142,10 +134,9 @@ Open the `.env` file in any text editor and fill in your values:
 ```env
 DISCORD_TOKEN=your_bot_token_from_step_3
 CLIENT_ID=your_client_id_from_step_2
-GUILD_ID=your_guild_id_from_step_5
 ```
 
-### Step 11: Start Your Bot
+### Step 9: Start Your Bot
 
 You have three options to run the bot:
 
@@ -176,7 +167,7 @@ When your bot starts, you'll see beautiful colored console output:
 - **BLUE** - System operations happening
 - **MAGENTA** - Commands being executed
 
-### Step 12: Make Sure Everything Works
+### Step 10: Make Sure Everything Works
 
 Check your Discord server - your bot should be online in the member list. Type `/` in any channel and you should see your bot's commands appear. Watch the bot's status change every few minutes to know the activity rotation is working.
 
@@ -254,7 +245,6 @@ Example:
 roles: 🎮:123456789,🎨:987654321,🎵:555555555
 ```
 
-
 ### Setting Up Welcome Messages
 
 Run this command to greet new members:
@@ -294,40 +284,6 @@ If you want to remove a reaction role message, right-click the message, select "
 /remove-reaction-roles
   message-id: 1234567890123456789
 ```
-
-### Resetting All Configurations
-
-If you want to start fresh and remove all bot configurations:
-
-```
-/reset
-```
-
-> [!CAUTION]
-> **This action cannot be undone!**
-> 
-> This command will completely remove:
-> - All reaction roles and their configurations
-> - Welcome message settings and channels
-> - Leave message settings and channels
-> - Leveling system configuration
-> - All user XP and level data for your server
-> - Scheduled messages
-> - Ticket system configuration (panel channel, category, staff roles)
-> - All ticket data (open and closed tickets)
->
-> **What it doesn't remove:**
-> - Ticket channels that were already created (you'll need to delete these manually)
-> - The ticket panel message (it will remain but won't function without configuration)
->
-> **When to use this:**
-> - You're reconfiguring the bot from scratch
-> - You're troubleshooting issues and want a clean slate
-> - You're removing the bot from your server
->
-> After running `/reset`, you'll need to set up all features again using their respective setup commands (`/setup-welcome`, `/setup-reaction-role`, `/setup-ticket`, etc.).
->
-> **Note:** Only server administrators can use this command.
 
 ### Setting Up the Leveling System
 
@@ -700,6 +656,40 @@ Don't like the color scheme in the terminal? Edit `src/utils/colors.js` to chang
 - **Can't claim tickets**: Only staff members and administrators can claim tickets
 - **Can't close tickets**: Staff, administrators, and the ticket creator can close tickets
 - **Transcripts not saving**: Make sure you specified a transcript-channel in the setup
+
+### Resetting All Configurations
+
+If you want to start fresh and remove all bot configurations:
+
+```
+/reset
+```
+
+> [!CAUTION]
+> **This action cannot be undone!**
+> 
+> This command will completely remove:
+> - All reaction roles and their configurations
+> - Welcome message settings and channels
+> - Leave message settings and channels
+> - Leveling system configuration
+> - All user XP and level data for your server
+> - Scheduled messages
+> - Ticket system configuration (panel channel, category, staff roles)
+> - All ticket data (open and closed tickets)
+>
+> **What it doesn't remove:**
+> - Ticket channels that were already created (you'll need to delete these manually)
+> - The ticket panel message (it will remain but won't function without configuration)
+>
+> **When to use this:**
+> - You're reconfiguring the bot from scratch
+> - You're troubleshooting issues and want a clean slate
+> - You're removing the bot from your server
+>
+> After running `/reset`, you'll need to set up all features again using their respective setup commands (`/setup-welcome`, `/setup-reaction-role`, `/setup-ticket`, etc.).
+>
+> **Note:** Only server administrators can use this command.
 
 ## Project Structure
 
