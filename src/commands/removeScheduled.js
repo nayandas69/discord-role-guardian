@@ -6,6 +6,7 @@
 
 import { SlashCommandBuilder, PermissionFlagsBits } from "discord.js"
 import { removeScheduledMessage, getScheduledMessages } from "../data/storage.js"
+import { cancelScheduledMessage } from "../handlers/scheduledMessages.js"
 import log from "../utils/colors.js"
 
 export const removeScheduledCommand = {
@@ -57,7 +58,9 @@ export const removeScheduledCommand = {
         })
       }
 
-      // Remove the scheduled message
+      const timerCancelled = cancelScheduledMessage(messageToRemove.id)
+
+      // Remove the scheduled message from storage
       removeScheduledMessage(interaction.guildId, messageToRemove.id)
 
       // Create confirmation embed
@@ -76,9 +79,16 @@ export const removeScheduledCommand = {
             value: `<#${messageToRemove.channelId}>`,
             inline: true,
           },
+          {
+            name: "Status",
+            value: timerCancelled ? "✅ Timer cleared immediately" : "⚠️ No active timer found",
+            inline: false,
+          },
         ],
         footer: {
-          text: "This message will no longer be sent automatically",
+          text: timerCancelled
+            ? "Stopped immediately - no restart needed"
+            : "This message will no longer be sent",
         },
         timestamp: new Date().toISOString(),
       }
@@ -88,7 +98,12 @@ export const removeScheduledCommand = {
       log.success(
         `Removed scheduled message "${messageName}" in ${interaction.guild.name} by ${interaction.user.tag}`,
       )
-      log.warn("Bot restart recommended to clear timer for removed message")
+      
+      if (timerCancelled) {
+        log.success("Active timer cleared successfully - no restart required")
+      } else {
+        log.info("No active timer found for this scheduled message")
+      }
     } catch (error) {
       log.error("Error in remove-scheduled command", error)
       throw error
