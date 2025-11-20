@@ -94,7 +94,7 @@ const server = http.createServer((req, res) => {
 // Start HTTP server for health checks
 server.listen(PORT, () => {
   log.system(`Health check server listening on port ${PORT}`);
-  log.info(`UptimeRobot URL: https://your-app-domain.com/health`);
+  log.info(`UptimeRobot URL: https://discord-role-guardian-production.up.railway.app/health`);
   // Adjust the URL above based on your deployment platform
   // For Railway, it would be something like: `https://your-railway-app.up.railway.app/health`
 });
