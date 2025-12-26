@@ -6,14 +6,16 @@
 ![Discord.js](https://img.shields.io/badge/discord.js-v14-blueviolet)
 ![CI](https://github.com/nayandas69/discord-role-guardian/actions/workflows/ci.yml/badge.svg)
 ![Docker Publish](https://github.com/nayandas69/discord-role-guardian/actions/workflows/docker-publish.yml/badge.svg)
+[![Discord](https://img.shields.io/discord/1435329767149797461?label=Join%20Discord&logo=discord&color=5865F2)](https://discord.gg/u9XfHZN8K9)
 
-Discord Role Guardian is a powerful, easy-to-use Discord bot that helps you manage reaction roles, welcome messages, leveling systems, support tickets, and more. Built with modern Discord features and designed for simplicity, this bot is perfect for community servers of all sizes.
+Discord Role Guardian is a powerful, easy-to-use Discord bot that helps you manage reaction roles, button roles, welcome messages, leveling systems, support tickets, and more. Built with modern Discord features and designed for simplicity, this bot is perfect for community servers of all sizes.
 
 ## What This Bot Does
 
 Think of this bot as your server's personal assistant. It handles the boring stuff so you can focus on building your community. Here's what makes it special:
 
 - **Reaction Roles** - Members click an emoji, they get a role. It's that simple. Perfect for game roles, color roles, notification preferences, or anything else you can think of.
+- **Button Roles** - Members click a button, they get a role. It's modern, easier to click, and works better on mobile.
 - **Welcome Messages** - Give new members a warm greeting with beautiful embedded messages that show them they're valued.
 - **Leave Messages** - Say goodbye with class when members leave your server.
 - **Leveling System** - Reward active members with XP for chatting. Members level up automatically and can earn special roles at specific levels. View leaderboards and track progress with instant XP notifications.
@@ -327,6 +329,7 @@ Most of the time, you'll just use `make run` for local development or `make dock
 - `/list-scheduled` - View scheduled messages
 - `/remove-scheduled` - Delete scheduled messages
 - `/remove-reaction-roles` - Remove reaction role configs
+- `/remove-button-roles` - Remove button role configs
 - `/setup-ticket` - Configure the support ticket system
 - `/ticket-stats` - View ticket statistics for your server
 - `/reset` - Reset all bot configurations
@@ -358,21 +361,82 @@ Example:
 roles: 🎮:123456789,🎨:987654321,🎵:555555555
 ```
 
+### Setting Up Button Roles
+
+Button roles work just like reaction roles, but members click buttons instead of reacting with emojis. Buttons are more modern, easier to click, and work better on mobile.
+
+Run this command to create a button role panel:
+
+```
+/setup-button-roles
+  channel: #roles
+  title: Choose Your Roles
+  description: Click the buttons below to get your roles!
+  roles: Gamer:1234567890123456789:primary,Artist:9876543210987654321:success
+```
+
+The roles format is `RoleName:roleID:style,RoleName:roleID:style` - role name, colon, role ID, colon, button style. Separate multiple roles with commas.
+
+**Button Styles:**
+- **primary** - Blue button (default, most common)
+- **secondary** - Gray button (neutral option)
+- **success** - Green button (positive actions)
+- **danger** - Red button (warnings or special roles)
+
+Example with different button colors:
+
+```
+roles: VIP:123456:danger,Gamer:789012:primary,Artist:345678:success,News:111222:secondary
+```
+
+Members can click buttons to add or remove roles instantly. When they get a role, they'll receive a DM saying "You've been given the X role in Server Name!" and when they remove it, they'll get "Your X role has been removed in Server Name."
+
+**Removing Button Roles:**
+
+If you want to remove a button role panel, right-click the message, select "Copy Message ID", then run:
+
+```
+/remove-button-roles
+  message-id: 1234567890123456789
+```
+
 ### Setting Up Welcome Messages
 
-Run this command to greet new members:
+Greet new members with a personalized welcome message when they join your server.
+
+Run this command to set up welcome messages:
 
 ```
 /setup-welcome
   channel: #welcome
   message: Welcome {user} to {server}! You are member #{count}!
+  rules-channel: #rules
+  role-channel: #get-roles
   embed-color: #00ff00
 ```
 
-You can use these placeholders in your message:
-- `{user}` - Mentions the new member
+**Available Placeholders:**
+- `{user}` - Mentions the new member (@Username)
 - `{server}` - Your server's name
-- `{count}` - Total member count
+- `{count}` - Total member count (e.g., "#1")
+
+**Optional Channels:**
+- **rules-channel** - Mention your rules channel in the welcome message
+- **role-channel** - Mention your role selection channel in the welcome message
+
+**Example Output:**
+
+When a new member joins, they'll see:
+
+```
+Welcome Username!
+
+Welcome @Username to My Server! You are member #1!
+
+Please read our #rules & get #roles to get started!
+```
+
+The welcome embed displays the member's avatar, has a clean design, and automatically mentions both your rules and role channels if configured. The member count updates automatically with each new member.
 
 ### Setting Up Leave Messages
 
@@ -818,34 +882,34 @@ If you want to start fresh and remove all bot configurations from your server:
 
 > [!CAUTION]
 > **This action cannot be undone!**
-> 
-> This command will completely remove all bot configurations for your server:
-> - **Reaction roles**: All configurations and panel messages deleted
-> - **Welcome messages**: Settings removed
-> - **Leave messages**: Settings removed  
-> - **Leveling system**: Configuration removed, all user XP and levels cleared
-> - **Scheduled messages**: All schedules cancelled immediately
-> - **Ticket system**: Panel, category, and staff role settings removed
-> - **Bot messages**: All configuration messages (reaction role panels, ticket panels) deleted from your server
->
-> **What happens immediately:**
-> - All scheduled messages stop sending instantly
-> - All cached configurations are cleared automatically
-> - Bot messages are removed from your channels
-> - **No bot restart required** - changes take effect immediately
->
-> **What you need to delete manually:**
-> - Ticket channels that were already created
-> - Any custom channels or categories you created for the bot
->
-> **When to use this:**
-> - You're reconfiguring the bot from scratch
-> - You're troubleshooting issues and want a clean slate
-> - You're removing the bot from your server
->
-> After running `/reset`, you can immediately set up all features again using their respective setup commands (`/setup-welcome`, `/setup-reaction-roles`, `/setup-ticket`, etc.).
->
-> **Note:** Only server administrators can use this command.
+
+ - This command will completely remove all bot configurations for your server:
+ - **Reaction roles**: All configurations and panel messages deleted
+ - **Button roles**: All configurations and panel messages deleted
+ - **Welcome messages**: Settings removed
+ - **Leave messages**: Settings removed  
+ - **Leveling system**: Configuration removed, all user XP and levels cleared
+ - **Scheduled messages**: All schedules cancelled immediately
+ - **Ticket system**: Panel, category, and staff role settings removed
+ - **Bot messages**: All configuration messages (reaction role panels, ticket panels) deleted from your server
+
+**What happens immediately:**
+- All scheduled messages stop sending instantly
+- All cached configurations are cleared automatically
+- Bot messages are removed from your channels
+- **No bot restart required** - changes take effect immediately
+
+**What you need to delete manually:**
+ - Ticket channels that were already created
+ - Any custom channels or categories you created for the bot
+
+**When to use this:**
+- You're reconfiguring the bot from scratch
+- You're troubleshooting issues and want a clean slate
+- You're removing the bot from your server
+- After running `/reset`, you can immediately set up all features again using their respective setup commands (`/setup-welcome`, `/setup-reaction-roles`, `/setup-ticket`, etc.).
+
+**Note:** Only server administrators can use this command.
 
 ## Project Structure
 
@@ -862,15 +926,17 @@ discord-role-guardian/
 │   │   └── reset.js
 │   │   ├── removeScheduled.js    
 │   │   ├── removeReactionRoles.js
-|   |   ├── setup.js
+│   │   ├── removeButtonRoles.js
+│   │   ├── setup.js
 │   │   ├── setupLeave.js
 │   │   ├── setupWelcome.js
 │   │   ├── setupLeveling.js      
 │   │   ├── scheduleMessage.js    
 │   │   ├── setupReactionRoles.js
+│   │   ├── setupButtonRoles.js
 │   │   ├── setupTicket.js
 │   │   └── ticketStats.js
-|   ├── config/                # Role config logic
+│   ├── config/                # Role config logic
 │   │   ├── roleConfig.js.
 │   ├── data/                  # Data storage
 │   │   ├── storage.js
@@ -879,6 +945,7 @@ discord-role-guardian/
 │   │   ├── interactionHandler.js
 │   │   ├── memberEvents.js
 │   │   ├── reactionRoles.js
+│   │   ├── buttonRoles.js     
 │   │   ├── levelingSystem.js     
 │   │   ├── scheduledMessages.js
 │   │   └── ticketSystem.js

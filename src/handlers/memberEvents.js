@@ -55,32 +55,27 @@ export async function handleMemberJoin(member) {
     // Get member count
     const memberCount = member.guild.memberCount;
 
+    let descriptionText = welcomeConfig.message
+      ? welcomeConfig.message
+          .replace('{user}', member.toString())
+          .replace('{server}', member.guild.name)
+          .replace('{count}', memberCount.toString())
+      : `Welcome ${member} to ${member.guild.name}! You are member #${memberCount}!`;
+
+    if (welcomeConfig.rulesChannelId && welcomeConfig.roleChannelId) {
+      descriptionText += `\n\nPlease read our <#${welcomeConfig.rulesChannelId}> & get <#${welcomeConfig.roleChannelId}> to get started!`;
+    } else if (welcomeConfig.rulesChannelId) {
+      descriptionText += `\n\nPlease read our <#${welcomeConfig.rulesChannelId}> to get started!`;
+    } else if (welcomeConfig.roleChannelId) {
+      descriptionText += `\n\nPlease get <#${welcomeConfig.roleChannelId}> to get started!`;
+    }
+
     // Create welcome embed with custom message if provided
     const welcomeEmbed = new EmbedBuilder()
       .setColor(welcomeConfig.embedColor || '#57F287') // Use saved color or default green
-      .setTitle('Welcome to the Server!')
-      .setDescription(
-        welcomeConfig.message
-          ? welcomeConfig.message
-              .replace('{user}', member.toString())
-              .replace('{server}', member.guild.name)
-              .replace('{count}', memberCount.toString())
-          : `Hey ${member}! Welcome to **${member.guild.name}**!\n\n` +
-              `We're glad to have you here. Make sure to read the rules and have fun!\n\n` +
-              `You are member **#${memberCount}**!`
-      )
-      .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-      .addFields(
-        { name: 'Username', value: member.user.tag, inline: true },
-        {
-          name: 'Account Created',
-          value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`,
-          inline: true
-        },
-        { name: 'User ID', value: member.id, inline: true }
-      )
-      .setFooter({ text: `Member #${memberCount}` })
-      .setTimestamp();
+      .setTitle(`Welcome ${member.user.username}!`)
+      .setDescription(descriptionText)
+      .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }));
 
     // Send welcome message
     await channel.send({
@@ -162,9 +157,7 @@ export async function handleMemberLeave(member) {
         { name: 'Username', value: member.user.tag, inline: true },
         { name: 'Joined Server', value: timeInServer, inline: true },
         { name: 'Members Now', value: `${memberCount}`, inline: true }
-      )
-      .setFooter({ text: `User ID: ${member.id}` })
-      .setTimestamp();
+      );
 
     // Send leave message
     await channel.send({ embeds: [leaveEmbed] });

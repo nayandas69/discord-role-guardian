@@ -1,6 +1,6 @@
 {
   "name": "discord-role-guardian",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Discord bot for reaction roles, welcome/leave messages with slash commands",
   "main": "src/index.js",
   "type": "module",

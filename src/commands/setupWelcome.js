@@ -28,6 +28,18 @@ export const setupWelcomeCommand = {
         .setName('embed-color')
         .setDescription('Hex color for embed (e.g., #00ff00)')
         .setRequired(false)
+    )
+    .addChannelOption((option) =>
+      option
+        .setName('rules-channel')
+        .setDescription('Rules channel to mention in welcome message')
+        .setRequired(false)
+    )
+    .addChannelOption((option) =>
+      option
+        .setName('role-channel')
+        .setDescription('Role channel to mention in welcome message')
+        .setRequired(false)
     ),
 
   /**
@@ -38,6 +50,8 @@ export const setupWelcomeCommand = {
     const channel = interaction.options.getChannel('channel');
     const message = interaction.options.getString('message');
     const embedColor = interaction.options.getString('embed-color') || '#00ff00';
+    const rulesChannel = interaction.options.getChannel('rules-channel');
+    const roleChannel = interaction.options.getChannel('role-channel');
 
     log.info(`Processing welcome setup for #${channel.name}`);
 
@@ -68,6 +82,8 @@ export const setupWelcomeCommand = {
       channelId: channel.id,
       message: message,
       embedColor: embedColor,
+      rulesChannelId: rulesChannel?.id,
+      roleChannelId: roleChannel?.id,
       enabled: true
     });
 
@@ -80,6 +96,8 @@ export const setupWelcomeCommand = {
           .replace('{user}', interaction.user.toString())
           .replace('{server}', interaction.guild.name)
           .replace('{count}', interaction.guild.memberCount.toString())
+          .replace('{rules}', rulesChannel ? rulesChannel.toString() : '')
+          .replace('{role}', roleChannel ? roleChannel.toString() : '')
       )
       .setThumbnail(interaction.user.displayAvatarURL())
       .setTimestamp();

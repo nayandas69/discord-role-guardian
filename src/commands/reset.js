@@ -39,6 +39,7 @@ async function execute(interaction) {
         `• Welcome messages: Removed ✅\n` +
         `• Leave messages: Removed ✅\n` +
         `• Reaction roles: Removed ${result.reactionRolesRemoved} configuration(s) ✅\n` +
+        `• Button roles: Removed ${result.buttonRolesRemoved || 0} configuration(s) ✅\n` +
         `• Leveling system: Removed (all user XP/levels cleared: ${result.userLevelsRemoved}) ✅\n` +
         `• Scheduled messages: ${result.scheduledMessagesRemoved ? 'Removed and cancelled ✅' : 'None configured'}\n` +
         `• Ticket system: Removed (panel, category, staff roles) ✅\n` +

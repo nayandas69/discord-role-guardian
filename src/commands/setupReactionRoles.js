@@ -79,19 +79,7 @@ export const setupReactionRolesCommand = {
     const embed = new EmbedBuilder()
       .setColor('#5865F2')
       .setTitle(title)
-      .setDescription(description)
-      .addFields(
-        roleConfig.map((config) => {
-          const role = interaction.guild.roles.cache.get(config.roleId);
-          return {
-            name: `${config.emoji} ${role.name}`,
-            value: 'React to get this role!',
-            inline: true
-          };
-        })
-      )
-      .setFooter({ text: 'React below to get your roles!' })
-      .setTimestamp();
+      .setDescription(description);
 
     try {
       // Send reaction role message to specified channel

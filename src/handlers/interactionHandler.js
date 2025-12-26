@@ -4,6 +4,8 @@
  */
 
 import { setupReactionRolesCommand } from '../commands/setupReactionRoles.js';
+import { setupButtonRolesCommand } from '../commands/setupButtonRoles.js';
+import { removeButtonRolesCommand } from '../commands/removeButtonRoles.js';
 import { setupWelcomeCommand } from '../commands/setupWelcome.js';
 import { setupLeaveCommand } from '../commands/setupLeave.js';
 import { removeReactionRolesCommand } from '../commands/removeReactionRoles.js';
@@ -25,15 +27,18 @@ import {
   handleTicketClaim,
   handleTicketClose
 } from '../handlers/ticketSystem.js';
+import { handleButtonRole } from '../handlers/buttonRoles.js';
 
 /**
  * Map of command names to their handler functions
  */
 const commands = {
   'setup-reaction-roles': setupReactionRolesCommand,
+  'setup-button-roles': setupButtonRolesCommand,
   'setup-welcome': setupWelcomeCommand,
   'setup-leave': setupLeaveCommand,
   'remove-reaction-roles': removeReactionRolesCommand,
+  'remove-button-roles': removeButtonRolesCommand,
   reset: resetCommand,
   'setup-leveling': setupLevelingCommand,
   'add-level-role': addLevelRoleCommand,
@@ -52,9 +57,11 @@ const commands = {
  */
 const commandStatusText = {
   'setup-reaction-roles': 'Setting up Reaction Roles',
+  'setup-button-roles': 'Setting up Button Roles',
   'setup-welcome': 'Configuring Welcome Messages',
   'setup-leave': 'Configuring Leave Messages',
   'remove-reaction-roles': 'Removing Reaction Roles',
+  'remove-button-roles': 'Removing Button Roles',
   reset: 'Resetting Configuration',
   'setup-leveling': 'Setting up Leveling System',
   'add-level-role': 'Adding Level Role Reward',
@@ -158,6 +165,10 @@ async function handleAutocomplete(interaction) {
  */
 async function handleButtonInteraction(interaction) {
   log.event(`Button clicked: ${interaction.customId} by ${interaction.user.tag}`);
+
+  if (interaction.customId.startsWith('button_role_')) {
+    return handleButtonRole(interaction);
+  }
 
   if (interaction.customId === 'create_ticket') {
     return handleTicketCreate(interaction);

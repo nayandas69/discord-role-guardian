@@ -14,6 +14,7 @@ const STORAGE_FILE = path.join(DATA_DIR, 'config.json');
 
 // Storage objects for bot configuration
 let reactionRoles = new Map(); // messageId -> roleConfig[]
+let buttonRoles = new Map(); // messageId -> roleConfig[]
 let welcomeConfigs = new Map(); // guildId -> welcomeConfig
 let leaveConfigs = new Map(); // guildId -> leaveConfig
 let levelingConfigs = new Map(); // guildId -> levelingConfig
@@ -79,6 +80,9 @@ export function loadAllConfigs() {
       if (data.reactionRoles) {
         reactionRoles = new Map(data.reactionRoles);
       }
+      if (data.buttonRoles) {
+        buttonRoles = new Map(data.buttonRoles);
+      }
       if (data.welcomeConfigs) {
         welcomeConfigs = new Map(data.welcomeConfigs);
       }
@@ -103,7 +107,7 @@ export function loadAllConfigs() {
 
       log.success(`Loaded configurations from: ${STORAGE_FILE}`);
       log.info(
-        `Loaded: ${reactionRoles.size} reaction roles, ${welcomeConfigs.size} welcome configs, ${leaveConfigs.size} leave configs`
+        `Loaded: ${reactionRoles.size} reaction roles, ${buttonRoles.size} button roles, ${welcomeConfigs.size} welcome configs, ${leaveConfigs.size} leave configs`
       );
       log.info(
         `Loaded: ${levelingConfigs.size} leveling configs, ${userLevels.size} user levels, ${scheduledMessages.size} scheduled messages`
@@ -133,6 +137,7 @@ function saveToFile() {
 
     const data = {
       reactionRoles: Array.from(reactionRoles.entries()),
+      buttonRoles: Array.from(buttonRoles.entries()),
       welcomeConfigs: Array.from(welcomeConfigs.entries()),
       leaveConfigs: Array.from(leaveConfigs.entries()),
       levelingConfigs: Array.from(levelingConfigs.entries()),
@@ -269,6 +274,69 @@ export function getAllReactionRoleConfigs() {
 export function getGuildReactionRoleMessages(guildId) {
   const messageIds = [];
   for (const [messageId, config] of reactionRoles.entries()) {
+    if (config && config.length > 0 && config[0]?.guildId === guildId) {
+      messageIds.push(messageId);
+    }
+  }
+  return messageIds;
+}
+
+/**
+ * BUTTON ROLES STORAGE
+ */
+
+/**
+ * Save button role configuration
+ * @param {string} messageId - Discord message ID
+ * @param {Array} config - Role configuration array
+ */
+export function saveButtonRoleConfig(messageId, config) {
+  buttonRoles.set(messageId, config);
+  saveToFile(); // Persist to file
+  log.system(`Saved button role config for message: ${messageId}`);
+  log.info(`Roles configured: ${config.length}`);
+}
+
+/**
+ * Get button role configuration
+ * @param {string} messageId - Discord message ID
+ * @returns {Array|null} Role configuration or null
+ */
+export function getButtonRoleConfig(messageId) {
+  return buttonRoles.get(messageId) || null;
+}
+
+/**
+ * Remove button role configuration
+ * @param {string} messageId - Discord message ID
+ * @returns {boolean} True if removed, false if not found
+ */
+export function removeButtonRoleConfig(messageId) {
+  const result = buttonRoles.delete(messageId);
+  if (result) {
+    saveToFile(); // Persist to file
+    log.system(`Removed button role config for message: ${messageId}`);
+  }
+  return result;
+}
+
+/**
+ * Get all button role configurations
+ * @returns {Map} All button role configs
+ */
+export function getAllButtonRoleConfigs() {
+  return buttonRoles;
+}
+
+/**
+ * Get all button role message IDs for a specific guild
+ * Used for cleaning up messages during reset
+ * @param {string} guildId - Discord guild ID
+ * @returns {Array<string>} Array of message IDs
+ */
+export function getGuildButtonRoleMessages(guildId) {
+  const messageIds = [];
+  for (const [messageId, config] of buttonRoles.entries()) {
     if (config && config.length > 0 && config[0]?.guildId === guildId) {
       messageIds.push(messageId);
     }
@@ -695,6 +763,16 @@ export async function resetGuildConfig(guildId) {
     }
   }
 
+  let buttonRemovedCount = 0;
+  for (const [messageId, config] of buttonRoles.entries()) {
+    // Check if any role in the config belongs to this guild
+    if (config && config.length > 0 && config[0]?.guildId === guildId) {
+      buttonRoles.delete(messageId);
+      buttonRemovedCount++;
+      log.system(`[RESET] Removed button role config for message: ${messageId}`);
+    }
+  }
+
   let removedLevels = 0;
   for (const [key] of userLevels) {
     if (key.startsWith(`${guildId}-`)) {
@@ -707,7 +785,7 @@ export async function resetGuildConfig(guildId) {
 
   log.success(`[RESET] Configuration reset complete for guild: ${guildId}`);
   log.info(
-    `[RESET] Removed: welcome config, leave config, ${removedCount} reaction role configs, leveling config, ${removedLevels} user levels, ${hadScheduledMessages ? 'scheduled messages' : 'no scheduled messages'}, ticket config`
+    `[RESET] Removed: welcome config, leave config, ${removedCount} reaction role configs, ${buttonRemovedCount} button role configs, leveling config, ${removedLevels} user levels, ${hadScheduledMessages ? 'scheduled messages' : 'no scheduled messages'}, ticket config`
   );
   log.info(`[RESET] Deleted ${deletedMessages} configuration message(s) from server`);
 
@@ -715,6 +793,7 @@ export async function resetGuildConfig(guildId) {
     welcomeRemoved: true,
     leaveRemoved: true,
     reactionRolesRemoved: removedCount,
+    buttonRolesRemoved: buttonRemovedCount,
     levelingRemoved: true,
     userLevelsRemoved: removedLevels,
     scheduledMessagesRemoved: hadScheduledMessages,
@@ -735,6 +814,7 @@ export function exportAllConfigs() {
   log.info('Exporting all configurations');
   return {
     reactionRoles: Array.from(reactionRoles.entries()),
+    buttonRoles: Array.from(buttonRoles.entries()),
     welcomeConfigs: Array.from(welcomeConfigs.entries()),
     leaveConfigs: Array.from(leaveConfigs.entries()),
     levelingConfigs: Array.from(levelingConfigs.entries()),
@@ -752,6 +832,9 @@ export function exportAllConfigs() {
 export function importConfigs(data) {
   if (data.reactionRoles) {
     data.reactionRoles.forEach(([key, value]) => reactionRoles.set(key, value));
+  }
+  if (data.buttonRoles) {
+    data.buttonRoles.forEach(([key, value]) => buttonRoles.set(key, value));
   }
   if (data.welcomeConfigs) {
     data.welcomeConfigs.forEach(([key, value]) => welcomeConfigs.set(key, value));
@@ -777,7 +860,7 @@ export function importConfigs(data) {
   saveToFile();
   log.success('Configurations imported successfully');
   log.info(
-    `Imported: ${data.reactionRoles?.length || 0} reaction roles, ${data.welcomeConfigs?.length || 0} welcome configs, ${data.leaveConfigs?.length || 0} leave configs, ${data.ticketConfigs?.length || 0} ticket configs`
+    `Imported: ${data.reactionRoles?.length || 0} reaction roles, ${data.buttonRoles?.length || 0} button roles, ${data.welcomeConfigs?.length || 0} welcome configs, ${data.leaveConfigs?.length || 0} leave configs, ${data.ticketConfigs?.length || 0} ticket configs`
   );
 }
 
@@ -794,6 +877,7 @@ export function getStorageStats() {
       size: stats.size,
       modified: stats.mtime,
       reactionRoleCount: reactionRoles.size,
+      buttonRoleCount: buttonRoles.size,
       welcomeConfigCount: welcomeConfigs.size,
       leaveConfigCount: leaveConfigs.size,
       levelingConfigCount: levelingConfigs.size,

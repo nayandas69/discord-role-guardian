@@ -5,6 +5,8 @@
 
 import { REST, Routes } from 'discord.js';
 import { setupReactionRolesCommand } from '../commands/setupReactionRoles.js';
+import { setupButtonRolesCommand } from '../commands/setupButtonRoles.js';
+import { removeButtonRolesCommand } from '../commands/removeButtonRoles.js';
 import { setupWelcomeCommand } from '../commands/setupWelcome.js';
 import { setupLeaveCommand } from '../commands/setupLeave.js';
 import { removeReactionRolesCommand } from '../commands/removeReactionRoles.js';
@@ -27,9 +29,11 @@ import log from './colors.js';
 export async function registerCommands(client) {
   const commands = [
     setupReactionRolesCommand,
+    setupButtonRolesCommand,
     setupWelcomeCommand,
     setupLeaveCommand,
     removeReactionRolesCommand,
+    removeButtonRolesCommand,
     resetCommand,
     setupLevelingCommand,
     addLevelRoleCommand,
