@@ -968,6 +968,8 @@ discord-role-guardian/
 ├── railway.json               # Railway deployment config
 ├── jest.config.js             # Jest testing config
 ├── eslint.config.js           # ESLint config
+├── CODE_OF_CONDUCT.md         # Code of conduct for contributors
+├── SECURITY.md                # Security policy
 └── README.md                  # You're reading it right now
 ```
 
