@@ -1,6 +1,7 @@
 import { log } from '../utils/colors.js';
 import { getButtonRoleConfig } from '../data/storage.js';
-import { MessageFlags } from 'discord.js';
+import { MessageFlags, ActivityType } from 'discord.js';
+import { setTemporaryStatus } from '../utils/activityManager.js';
 
 /**
  * Handle button role interactions
@@ -45,6 +46,12 @@ export async function handleButtonRole(interaction) {
   try {
     // Toggle role - add if user doesn't have it, remove if they do
     if (member.roles.cache.has(roleId)) {
+      setTemporaryStatus(
+        `Removing ${role.name} from ${member.user.username}`,
+        ActivityType.Playing,
+        3000
+      );
+
       await member.roles.remove(role);
       log.info(`Removed role ${role.name} from ${member.user.tag}`);
 
@@ -61,6 +68,12 @@ export async function handleButtonRole(interaction) {
         content: `Your **${role.name}** role has been removed!`
       });
     } else {
+      setTemporaryStatus(
+        `Assigning ${role.name} to ${member.user.username}`,
+        ActivityType.Playing,
+        3000
+      );
+
       await member.roles.add(role);
       log.success(`Added role ${role.name} to ${member.user.tag}`);
 
