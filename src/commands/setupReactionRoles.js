@@ -3,7 +3,7 @@
  * Allows server owners to create reaction role messages
  */
 
-import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } from 'discord.js';
 import { saveReactionRoleConfig } from '../data/storage.js';
 import { log } from '../utils/colors.js';
 
@@ -54,7 +54,7 @@ export const setupReactionRolesCommand = {
       return interaction.editReply({
         content:
           'Invalid role format! Use: emoji:roleID,emoji:roleID\nExample: 🔴:123456789,🔵:987654321',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -71,7 +71,7 @@ export const setupReactionRolesCommand = {
       log.error(`Invalid role IDs detected: ${invalidRoles.join(', ')}`);
       return interaction.editReply({
         content: `Invalid role IDs: ${invalidRoles.join(', ')}\nMake sure all role IDs are correct!`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -102,7 +102,7 @@ export const setupReactionRolesCommand = {
       // Confirm success to admin
       await interaction.editReply({
         content: `Reaction role message created in ${channel}!\nMessage ID: ${message.id}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       log.success(`Reaction roles setup in #${channel.name} by ${interaction.user.tag}`);
@@ -112,7 +112,7 @@ export const setupReactionRolesCommand = {
       log.error(`Error: ${error.message}`);
       await interaction.editReply({
         content: 'Failed to create reaction role message. Check bot permissions!',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

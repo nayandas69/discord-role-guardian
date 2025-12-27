@@ -9,7 +9,8 @@ import {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  MessageFlags
 } from 'discord.js';
 import { saveButtonRoleConfig } from '../data/storage.js';
 import { log } from '../utils/colors.js';
@@ -63,7 +64,7 @@ export const setupButtonRolesCommand = {
       return interaction.editReply({
         content:
           'Invalid role format! Use: label:roleID:style,label:roleID:style\nExample: Gamer:123456789:primary,Artist:987654321:success\nStyles: primary (blue), secondary (gray), success (green), danger (red)',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -71,7 +72,7 @@ export const setupButtonRolesCommand = {
     if (roleConfig.length > 25) {
       return interaction.editReply({
         content: 'Maximum 25 button roles allowed (5 rows of 5 buttons)!',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -88,7 +89,7 @@ export const setupButtonRolesCommand = {
       log.error(`Invalid role IDs detected: ${invalidRoles.join(', ')}`);
       return interaction.editReply({
         content: `Invalid role IDs: ${invalidRoles.join(', ')}\nMake sure all role IDs are correct!`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -134,7 +135,7 @@ export const setupButtonRolesCommand = {
       // Confirm success to admin
       await interaction.editReply({
         content: `Button role message created in ${channel}!\nMessage ID: ${message.id}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       log.success(`Button roles setup in #${channel.name} by ${interaction.user.tag}`);
@@ -144,7 +145,7 @@ export const setupButtonRolesCommand = {
       log.error(`Error: ${error.message}`);
       await interaction.editReply({
         content: 'Failed to create button role message. Check bot permissions!',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

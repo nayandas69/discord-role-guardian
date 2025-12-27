@@ -68,6 +68,17 @@ node scripts/cleanup-duplicate-commands.js
 - Duplicates will disappear naturally in 1-2 hours
 - No further action needed
 
+## remove.cjs
+
+**Purpose:** Removes all global slash commands registered by the bot.
+- Useful for resetting commands or cleaning up before a fresh deployment.
+- Make sure to re-register commands after running this script.
+
+**Usage:**
+```bash
+node scripts/remove.cjs
+```
+
 ---
 
 ## Adding New Scripts

@@ -3,7 +3,7 @@
  * Delete existing button role configuration
  */
 
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { removeButtonRoleConfig } from '../data/storage.js';
 import { log } from '../utils/colors.js';
 
@@ -34,13 +34,13 @@ export const removeButtonRolesCommand = {
     if (removed) {
       await interaction.editReply({
         content: `Button role configuration removed for message ID: ${messageId}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
       log.success(`Button roles removed for message: ${messageId}`);
     } else {
       await interaction.editReply({
         content: `No button role configuration found for message ID: ${messageId}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
       log.warn(`No configuration found for message: ${messageId}`);
     }
