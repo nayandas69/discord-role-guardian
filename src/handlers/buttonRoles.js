@@ -1,10 +1,7 @@
 import { log } from '../utils/colors.js';
-<<<<<<< HEAD
-=======
 import { getButtonRoleConfig } from '../data/storage.js';
 import { MessageFlags, ActivityType } from 'discord.js';
 import { setTemporaryStatus } from '../utils/activityManager.js';
->>>>>>> dev
 
 /**
  * Handle button role interactions
@@ -16,15 +13,33 @@ export async function handleButtonRole(interaction) {
     return;
   }
 
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+  const config = getButtonRoleConfig(interaction.message.id);
+  if (!config) {
+    log.warn(`Button role configuration removed for message: ${interaction.message.id}`);
+    return interaction.editReply({
+      content: '❌ This button role configuration has been removed by an administrator!'
+    });
+  }
+
   const roleId = interaction.customId.replace('button_role_', '');
+
+  const roleInConfig = config.some((r) => r.roleId === roleId);
+  if (!roleInConfig) {
+    log.warn(`Role ${roleId} not found in config for message: ${interaction.message.id}`);
+    return interaction.editReply({
+      content: '❌ This role is no longer available!'
+    });
+  }
+
   const member = interaction.member;
   const role = interaction.guild.roles.cache.get(roleId);
 
   if (!role) {
     log.warn(`Button role not found: ${roleId}`);
-    return interaction.reply({
-      content: 'This role no longer exists!',
-      ephemeral: true
+    return interaction.editReply({
+      content: 'This role no longer exists!'
     });
   }
 
@@ -49,9 +64,8 @@ export async function handleButtonRole(interaction) {
         log.info(`Could not DM ${member.user.tag} (DMs disabled)`);
       }
 
-      await interaction.reply({
-        content: `Your **${role.name}** role has been removed!`,
-        ephemeral: true
+      await interaction.editReply({
+        content: `Your **${role.name}** role has been removed!`
       });
     } else {
       setTemporaryStatus(
@@ -72,18 +86,16 @@ export async function handleButtonRole(interaction) {
         log.info(`Could not DM ${member.user.tag} (DMs disabled)`);
       }
 
-      await interaction.reply({
-        content: `You've been given the **${role.name}** role!`,
-        ephemeral: true
+      await interaction.editReply({
+        content: `You've been given the **${role.name}** role!`
       });
     }
   } catch (error) {
     log.error(`Failed to toggle role ${role.name} for ${member.user.tag}`);
     log.error(`Error: ${error.message}`);
 
-    await interaction.reply({
-      content: 'Failed to update your role. Please contact a server administrator!',
-      ephemeral: true
+    await interaction.editReply({
+      content: 'Failed to update your role. Please contact a server administrator!'
     });
   }
 }
