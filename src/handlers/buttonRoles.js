@@ -73,7 +73,6 @@ export async function handleButtonRole(interaction) {
         ActivityType.Playing,
         3000
       );
-      setTemporaryStatus(`Assigning Role: ${user.username}`, ActivityType.Playing, 4000);
 
       await member.roles.add(role);
       log.success(`Added role ${role.name} to ${member.user.tag}`);
