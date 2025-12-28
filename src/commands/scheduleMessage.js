@@ -65,7 +65,8 @@ export const scheduleMessageCommand = {
         .setMaxValue(31)
         .setRequired(false)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false), // Added to ensure command only works in servers
 
   async execute(interaction) {
     try {

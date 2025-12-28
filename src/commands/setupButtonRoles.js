@@ -20,6 +20,7 @@ export const setupButtonRolesCommand = {
     .setName('setup-button-roles')
     .setDescription('Create a button role message')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false) // Added to prevent DM usage
     .addChannelOption((option) =>
       option
         .setName('channel')

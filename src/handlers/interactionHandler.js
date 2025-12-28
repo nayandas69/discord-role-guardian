@@ -18,7 +18,7 @@ import { scheduleMessageCommand } from '../commands/scheduleMessage.js';
 import { listScheduledCommand } from '../commands/listScheduled.js';
 import { removeScheduledCommand } from '../commands/removeScheduled.js';
 import { setTemporaryStatus } from '../utils/activityManager.js';
-import { ActivityType } from 'discord.js';
+import { ActivityType, PermissionFlagsBits } from 'discord.js';
 import log from '../utils/colors.js';
 import { setupTicketCommand } from '../commands/setupTicket.js';
 import { ticketStatsCommand } from '../commands/ticketStats.js';
@@ -75,6 +75,12 @@ const commandStatusText = {
 };
 
 /**
+ * List of commands that are accessible to all server members
+ * All other commands require Administrator permissions
+ */
+const PUBLIC_COMMANDS = ['rank', 'leaderboard'];
+
+/**
  * Handle all interaction events (commands, buttons, autocomplete, etc.)
  * @param {Interaction} interaction - Discord interaction object
  */
@@ -107,6 +113,29 @@ async function handleSlashCommand(interaction) {
       content: 'Unknown command!',
       flags: 64 // 64 = MessageFlags.Ephemeral
     });
+  }
+
+  // This is a CRITICAL SECURITY CHECK that prevents regular members from using admin commands
+  // even if they try to re-invite the bot or bypass Discord's default permissions
+  if (!PUBLIC_COMMANDS.includes(interaction.commandName)) {
+    // Check if user has Administrator permission in the guild
+    const member = interaction.member;
+
+    if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
+      log.security(
+        `Unauthorized command attempt: /${interaction.commandName} by ${interaction.user.tag} (User ID: ${interaction.user.id})`
+      );
+
+      return interaction.reply({
+        content:
+          '⛔ **Access Denied**\n\nYou need **Administrator** permissions to use this command.\nOnly server administrators can configure bot settings.',
+        flags: 64 // Ephemeral - only visible to the user who tried the command
+      });
+    }
+
+    log.security(
+      `Admin command authorized: /${interaction.commandName} by ${interaction.user.tag}`
+    );
   }
 
   try {

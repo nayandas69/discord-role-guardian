@@ -60,7 +60,8 @@ export const setupLevelingCommand = {
         .setDescription('Announce when users earn XP - instant notifications (default: false)')
         .setRequired(false)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false),
 
   async execute(interaction) {
     try {

@@ -12,6 +12,7 @@ export const setupWelcomeCommand = {
     .setName('setup-welcome')
     .setDescription('Setup welcome messages for new members')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false)
     .addChannelOption((option) =>
       option.setName('channel').setDescription('Channel to send welcome messages').setRequired(true)
     )

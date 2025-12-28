@@ -12,7 +12,8 @@ export const rankCommand = {
     .setDescription('Check your level and XP')
     .addUserOption((option) =>
       option.setName('user').setDescription('User to check (optional)').setRequired(false)
-    ),
+    )
+    .setDMPermission(false), // Added setDMPermission(false) to prevent use in DMs and ensure proper server-only visibility
 
   async execute(interaction) {
     try {

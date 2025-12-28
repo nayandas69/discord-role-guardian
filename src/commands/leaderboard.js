@@ -17,7 +17,8 @@ export const leaderboardCommand = {
         .setMinValue(5)
         .setMaxValue(25)
         .setRequired(false)
-    ),
+    )
+    .setDMPermission(false),
 
   async execute(interaction) {
     try {

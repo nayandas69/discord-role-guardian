@@ -20,7 +20,8 @@ export const removeScheduledCommand = {
         .setRequired(true)
         .setAutocomplete(true)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false), // Added to ensure command only works in servers
 
   // Autocomplete handler to show available scheduled messages
   async autocomplete(interaction) {

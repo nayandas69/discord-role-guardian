@@ -13,6 +13,7 @@ export const setupTicketCommand = {
     .setName('setup-ticket')
     .setDescription('Setup the ticket system for support')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false) // Added to prevent DM usage
     .addChannelOption((option) =>
       option
         .setName('panel-channel')

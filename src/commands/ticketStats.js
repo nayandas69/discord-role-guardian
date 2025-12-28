@@ -12,7 +12,8 @@ export const ticketStatsCommand = {
   data: new SlashCommandBuilder()
     .setName('ticket-stats')
     .setDescription('View ticket system statistics')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false), // Added to prevent DM usage
 
   /**
    * Execute ticket stats command

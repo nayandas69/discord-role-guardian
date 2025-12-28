@@ -11,7 +11,8 @@ export const listScheduledCommand = {
   data: new SlashCommandBuilder()
     .setName('list-scheduled')
     .setDescription('View all scheduled messages for this server')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false), // Added to ensure command only works in servers
 
   async execute(interaction) {
     try {

@@ -12,6 +12,7 @@ export const setupReactionRolesCommand = {
     .setName('setup-reaction-roles')
     .setDescription('Create a reaction role message')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false) // Added to prevent DM usage
     .addChannelOption((option) =>
       option
         .setName('channel')

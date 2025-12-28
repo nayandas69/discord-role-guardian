@@ -19,6 +19,7 @@ const colors = {
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
   white: '\x1b[37m',
+  pink: '\x1b[38;5;213m',
 
   // Background colors
   bgRed: '\x1b[41m',
@@ -64,9 +65,9 @@ export const log = {
     console.log(`${colors.magenta}[COMMAND]${colors.reset} ${message}`);
   },
 
-  // Event messages (white)
+  // Event messages (pink)
   event: (message) => {
-    console.log(`${colors.white}[EVENT]${colors.reset} ${message}`);
+    console.log(`${colors.pink}[EVENT]${colors.reset} ${message}`);
   },
 
   // Starting/restart messages (bright green)
@@ -77,6 +78,13 @@ export const log = {
   // Failed operations (bright red)
   failed: (message) => {
     console.error(`${colors.bright}${colors.red}[FAILED]${colors.reset} ${message}`);
+  },
+
+  // Security messages (bright yellow with red background for visibility)
+  security: (message) => {
+    console.log(
+      `${colors.bright}${colors.bgRed}${colors.yellow}[SECURITY]${colors.reset} ${message}`
+    );
   }
 };
 

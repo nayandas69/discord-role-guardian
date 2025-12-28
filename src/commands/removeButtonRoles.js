@@ -12,6 +12,7 @@ export const removeButtonRolesCommand = {
     .setName('remove-button-roles')
     .setDescription('Remove a button role message')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false) // Added to prevent DM usage and ensure proper server-only visibility
     .addStringOption((option) =>
       option
         .setName('message-id')

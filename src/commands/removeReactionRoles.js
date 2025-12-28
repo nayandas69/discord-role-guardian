@@ -12,6 +12,7 @@ export const removeReactionRolesCommand = {
     .setName('remove-reaction-roles')
     .setDescription('Remove a reaction role message')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false) // Added to prevent DM usage
     .addStringOption((option) =>
       option
         .setName('message-id')

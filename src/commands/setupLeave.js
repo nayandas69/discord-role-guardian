@@ -12,6 +12,7 @@ export const setupLeaveCommand = {
     .setName('setup-leave')
     .setDescription('Setup goodbye messages when members leave')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false) // Added to prevent DM usage
     .addChannelOption((option) =>
       option.setName('channel').setDescription('Channel to send leave messages').setRequired(true)
     )

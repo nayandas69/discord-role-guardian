@@ -21,7 +21,8 @@ export const addLevelRoleCommand = {
     .addRoleOption((option) =>
       option.setName('role').setDescription('The role to award').setRequired(true)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false),
 
   async execute(interaction) {
     try {
