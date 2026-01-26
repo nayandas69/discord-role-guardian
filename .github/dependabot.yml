@@ -1,58 +1,53 @@
 version: 2
 updates:
-  # Enable version updates for npm dependencies
+  # NPM dependencies with smart grouping
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "03:00"
+      time: "09:00"
       timezone: "Asia/Dhaka"
     open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
     reviewers:
       - "nayandas69"
     assignees:
       - "nayandas69"
-    commit-message:
-      prefix: "chore(deps):"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "auto-update"
-    allow:
-      - dependency-type: "all"
+    groups:
+      # Production dependencies
+      production:
+        patterns:
+          - "discord.js"
+          - "dotenv"
+        update-types:
+          - "minor"
+          - "patch"
+      # Dev dependencies
+      dev-tools:
+        patterns:
+          - "jest"
+          - "prettier"
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
-      - dependency-name: "discord.js"
-        versions: ["14.0.0"]
+      # Ignore major version updates (manual review)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  # Enable security updates for npm dependencies
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
-      time: "03:00"
-      timezone: "Asia/Dhaka"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "nayandas69"
-    assignees:
-      - "nayandas69"
-    commit-message:
-      prefix: "security(deps):"
-      include: "scope"
-    labels:
-      - "security"
-      - "dependencies"
-    allow:
-      - dependency-type: "direct"
-
-  # Enable version updates for GitHub Actions
+  # GitHub Actions updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "friday"
-      time: "03:00"
+      time: "09:00"
       timezone: "Asia/Dhaka"
     reviewers:
       - "nayandas69"
@@ -60,5 +55,7 @@ updates:
       - "nayandas69"
     commit-message:
       prefix: "ci(actions):"
+      include: "scope"
     labels:
       - "github-actions"
+      - "ci/cd"
