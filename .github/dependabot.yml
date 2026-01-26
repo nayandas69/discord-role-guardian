@@ -5,6 +5,8 @@ updates:
   # ===============================
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "main"
+
     schedule:
       interval: "weekly"
       day: "monday"
@@ -41,12 +43,12 @@ updates:
           - "patch"
 
     ignore:
-      # 🚫 Ignore ALL major updates by default
+      # Ignore ALL major updates by default
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
 
-      # 🎯 Explicit major pinning
+      # Explicit major pinning
       - dependency-name: "discord.js"
         update-types:
           - "version-update:semver-major"
@@ -60,10 +62,11 @@ updates:
   # ===============================
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "security-updates"
+
     schedule:
       interval: "daily"
 
-    # Only security updates
     security-updates-only: true
 
     commit-message:
