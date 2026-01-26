@@ -1,0 +1,80 @@
+version: 2
+updates:
+  # ===============================
+  # Regular dependency updates
+  # ===============================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Dhaka"
+
+    open-pull-requests-limit: 10
+
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+    labels:
+      - "dependencies"
+      - "npm"
+
+    reviewers:
+      - "nayandas69"
+
+    assignees:
+      - "nayandas69"
+
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+    ignore:
+      # 🚫 Ignore ALL major updates by default
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+
+      # 🎯 Explicit major pinning
+      - dependency-name: "discord.js"
+        update-types:
+          - "version-update:semver-major"
+
+      - dependency-name: "next"
+        update-types:
+          - "version-update:semver-major"
+
+  # ===============================
+  # 🔐 SECURITY-ONLY FAST LANE
+  # ===============================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+    # Only security updates
+    security-updates-only: true
+
+    commit-message:
+      prefix: "fix(security)"
+
+    labels:
+      - "security"
+      - "dependencies"
+
+    reviewers:
+      - "nayandas69"
+
+    assignees:
+      - "nayandas69"
